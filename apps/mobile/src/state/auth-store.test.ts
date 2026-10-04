@@ -95,6 +95,40 @@ describe('refreshIfNeeded', () => {
     expect(useAuth.getState().token).toBe('tok-1');
   });
 
+  it('a forced refresh still POSTs when sentToken matches the current token', async () => {
+    seedSession(3_600_000);
+    refreshTokensMock.mockResolvedValue({ accessToken: 'tok-2', refreshToken: 'rt-2', expiresIn: 3600 });
+
+    expect(await useAuth.getState().refreshIfNeeded({ force: true, sentToken: 'tok-1' })).toBe('tok-2');
+    expect(refreshTokensMock).toHaveBeenCalledTimes(1);
+    expect(refreshTokensMock).toHaveBeenCalledWith('rt-1');
+  });
+
+  it('a forced refresh with no refresh token signs out without a POST', async () => {
+    seedSession(3_600_000);
+    useAuth.setState({ refreshToken: null });
+
+    expect(await useAuth.getState().refreshIfNeeded({ force: true })).toBeNull();
+    expect(useAuth.getState().token).toBeNull();
+    expect(refreshTokensMock).not.toHaveBeenCalled();
+  });
+
+  it('keeps the session when the refresh response carries no access token', async () => {
+    seedSession(10_000);
+    refreshTokensMock.mockResolvedValue({ accessToken: '', refreshToken: 'rt-2', expiresIn: 3600 });
+
+    expect(await useAuth.getState().refreshIfNeeded({ force: true })).toBe('tok-1');
+    expect(useAuth.getState().refreshToken).toBe('rt-1');
+  });
+
+  it('stands pat on a stale token when a proactive caller has no refresh token', async () => {
+    seedSession(10_000);
+    useAuth.setState({ refreshToken: null });
+
+    expect(await useAuth.getState().refreshIfNeeded()).toBe('tok-1');
+    expect(refreshTokensMock).not.toHaveBeenCalled();
+  });
+
   it('sends nothing in dev auto-auth mode', async () => {
     useAuth.setState({ loaded: true, authMode: 'dev', token: null, refreshToken: null });
     expect(await useAuth.getState().refreshIfNeeded({ force: true })).toBeNull();
@@ -103,6 +137,38 @@ describe('refreshIfNeeded', () => {
 });
 
 describe('session persistence', () => {
+  it('persists a refreshed session under the lupira.maps.* keys', async () => {
+    seedSession(10_000);
+    refreshTokensMock.mockResolvedValue({ accessToken: 'tok-2', refreshToken: 'rt-2', expiresIn: 3600 });
+
+    await useAuth.getState().refreshIfNeeded({ force: true });
+    expect(store.get('lupira.maps.token')).toBe('tok-2');
+    expect(store.get('lupira.maps.refreshToken')).toBe('rt-2');
+    expect(Number(store.get('lupira.maps.expiresAt'))).toBeGreaterThan(Date.now());
+  });
+
+  it('wipes the persisted session on a definitive failure', async () => {
+    seedSession(10_000);
+    store.set('lupira.maps.token', 'tok-1');
+    store.set('lupira.maps.refreshToken', 'rt-1');
+    store.set('lupira.maps.expiresAt', '1');
+    store.set('lupira.maps.userSub', 'user@test');
+    refreshTokensMock.mockRejectedValue(new RefreshError(true, 'invalid_grant'));
+
+    await useAuth.getState().refreshIfNeeded({ force: true });
+    expect([...store.keys()]).toEqual([]);
+  });
+
+  it('restores a session persisted under the existing keys', async () => {
+    store.set('lupira.maps.token', 'tok-7');
+    store.set('lupira.maps.refreshToken', 'rt-7');
+    store.set('lupira.maps.expiresAt', '4102444800000');
+    store.set('lupira.maps.userSub', 'user@test');
+
+    await useAuth.getState().load();
+    expect(useAuth.getState()).toMatchObject({ token: 'tok-7', refreshToken: 'rt-7', expiresAt: 4102444800000, user: { sub: 'user@test' } });
+  });
+
   it('round-trips a session through the secure store', async () => {
     useAuth.setState({ loaded: true, authMode: 'oidc' });
     await useAuth.getState().setSession({ accessToken: 'tok-9', refreshToken: 'rt-9', expiresIn: 3600 });

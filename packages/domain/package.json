@@ -13,6 +13,7 @@
     "test:watch": "vitest"
   },
   "devDependencies": {
+    "@danbro96/lupira-config-eslint": "0.2.0",
     "@types/geojson": "^7946.0.16"
   },
   "dependencies": {
