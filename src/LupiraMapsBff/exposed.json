@@ -1,0 +1,69 @@
+{
+  "clusters": {
+    "cal-api": { "prefix": "/api" },
+    "contact-api": { "prefix": "/contact-api" },
+    "geo-api": { "prefix": "/geo-api" },
+    "location-api": { "prefix": "/location-api" },
+    "photo-api": { "prefix": "/photo-api" }
+  },
+  "groups": {
+    "static": { "catchAll": true },
+    "device": { "policy": "Anonymous", "prefixed": false, "credential": "deviceKey" }
+  },
+  "operations": {
+    "cal-api": [
+      "GET /calendars",
+      "GET /hotspots",
+      "GET /items",
+      "GET /items/by-place/{placeId}",
+      "GET /items/{id}"
+    ],
+    "contact-api": [
+      "DELETE /places/{placeId}/entry-codes/{codeId}",
+      "GET /contacts",
+      "GET /contacts/{id}/relations",
+      "GET /me",
+      "GET /places/{placeId}/entry",
+      "GET /residencies",
+      "PUT /places/{placeId}/entry-codes/{codeId}"
+    ],
+    "geo-api": [
+      "GET /curation/orphans",
+      "GET /geocode/forward",
+      "GET /me/places",
+      "GET /places",
+      "GET /places/suggest",
+      "GET /places/{id}",
+      "GET /places/{id}/history",
+      "PATCH /places/{id}",
+      "POST /curation/prune",
+      "POST /places",
+      "POST /places/lookup",
+      "POST /places/{id}/regeocode"
+    ],
+    "location-api": [
+      "DELETE /devices/{id}",
+      "DELETE /location",
+      "GET /location/current",
+      "GET /location/track/thinned",
+      "GET /location/trips",
+      "GET /location/visits",
+      "POST /devices"
+    ],
+    "photo-api": [
+      "GET /photos/map"
+    ]
+  },
+  "static": {
+    "geo-api": [
+      "GET /basemap/{**path}"
+    ]
+  },
+  "device": {
+    "location-api": [
+      "POST /ingest/location",
+      "GET /ingest/location/cursor",
+      "GET /ingest/location/state"
+    ]
+  }
+}

@@ -1,0 +1,29 @@
+/* Tokens all come from the MUI theme (ui/theme/muiTheme.ts) fed by @lupira/maps-tokens. What is left
+   here is what no component can own: Tailwind's entry points and the one vendor-positioning rule below. */
+
+/* No preflight: CssBaseline is the reset. MUI injects unlayered, so it outranks these rules —
+   nothing here may target an element that also carries an MUI component. */
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+
+@layer bespoke {
+  * {
+    box-sizing: border-box;
+  }
+  /* Margin/background/color come from CssBaseline (theme vars). */
+  body {
+    min-height: 100vh;
+  }
+  code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.9em;
+  }
+
+  /* maplibre-gl.css (loaded with the lazy chunk) forces .maplibregl-map to position:relative,
+     so the canvas host must size as a flex child, not via absolute inset. */
+  .map-canvas {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+  }
+}
