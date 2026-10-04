@@ -32,7 +32,7 @@ export const DEFAULT_AUTH_MODE: AuthMode =
   ?? (process.env.EXPO_PUBLIC_API_URL ? 'dev' : 'oidc');
 
 // Sentry DSN — a public ingest key, safe to commit. Empty disables reporting.
-export const SENTRY_DSN = '';
+export const SENTRY_DSN = 'https://2ccd000f5fba9baea0b8e897fe860c1b@o4511341575733248.ingest.de.sentry.io/4512199943192656';
 
 /** Where a sibling app's pages live when the app itself isn't installed. */
 export const SIBLING_WEB_HOSTS = {
