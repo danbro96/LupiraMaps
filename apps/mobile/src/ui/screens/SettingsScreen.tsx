@@ -7,6 +7,7 @@ import { useLocationTracking } from '../../state/location-tracking-store';
 import { usePrefs } from '../../state/prefs-store';
 import { useTrackingStatus } from '../../sync/locationTrackingStatus';
 import { IdentityHeader } from '@danbro96/lupira-expo-paper/components/IdentityHeader';
+import { SignOutButton } from '@danbro96/lupira-expo-paper/components/SignOutButton';
 import { VersionLine } from '@danbro96/lupira-expo-diagnostics/VersionLine';
 import { ICONS } from '../icons';
 import type { RootStackParamList } from '../navigation/types';
@@ -43,6 +44,9 @@ export function SettingsScreen() {
         name={authMode === 'dev' ? 'Dev auto-auth' : user?.name ?? user?.sub ?? 'Signed out'}
         sub={authMode === 'dev' ? 'No sign-in' : user?.name ? user.sub : undefined}
       />
+
+      <List.Subheader>Account</List.Subheader>
+      {authMode !== 'dev' && <SignOutButton onSignOut={() => void useAuth.getState().clearSession()} />}
 
       <List.Subheader>Location</List.Subheader>
       <List.Item
