@@ -73,7 +73,7 @@ function HitDetail({ hit, onAction, onOpenPlace }: {
         />
       )}
       <Typography variant="subtitle2" sx={{ pr: 3 }}>
-        {hit.kind === 'saved' && hit.icon ? `${hit.icon} ` : ''}{title}
+        {title}
       </Typography>
       {detail.map((line) => (
         <Typography key={line} variant="caption" component="p" sx={{ color: 'text.secondary' }}>{line}</Typography>

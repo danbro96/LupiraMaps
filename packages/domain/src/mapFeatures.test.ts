@@ -165,6 +165,16 @@ describe('savedPlaceFeatures', () => {
     expect(fc.features).toHaveLength(1);
     expect(props(fc).label).toBe('Cabin');
   });
+
+  it('carries the linked place category, null for a raw-coordinate saved place', () => {
+    const fc = savedPlaceFeatures([
+      { id: 's1', label: 'Hotel', category: 'Hotel', isFavorite: false, latitude: 59, longitude: 18 },
+      { id: 's2', label: 'Spot', isFavorite: false, latitude: 59, longitude: 18 },
+    ]);
+    expect(props(fc, 0)).toMatchObject({ category: 'Hotel', glyph: 'hotel' });
+    expect(props(fc, 1).category).toBeNull();
+    expect(props(fc, 1)).not.toHaveProperty('glyph');
+  });
 });
 
 describe('photoFeatures', () => {

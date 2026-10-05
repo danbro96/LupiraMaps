@@ -32,6 +32,8 @@ export const PIN = {
   photo: 6,
   /** A favourite saved place reads larger. */
   saved: ['case', ['get', 'isFavorite'], 8, 6] as unknown[],
+  /** A saved place drawn with a category glyph needs room for it. */
+  savedGlyph: ['case', ['get', 'isFavorite'], 12, 10] as unknown[],
 } as const;
 
 /** A contact pin is a dot in the contact colour; one where everyone is on holiday (`vacation`) is a ring instead. */

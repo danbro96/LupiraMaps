@@ -3,6 +3,7 @@ import { type FuzzyDate, fmtFuzzyDate, fmtResidencyPeriod, residencyStatus } fro
 import { splitTrack, type Bbox, type TrackPointLike } from '@danbro96/lupira-domain-places/geo';
 import { addressTypeLabel } from '@danbro96/lupira-domain-contacts/residents';
 import { plural } from '@danbro96/lupira-domain-core/wording';
+import { placeGlyph, type PlaceGlyph } from '@danbro96/lupira-domain-maps/placeGlyph';
 
 // Row-to-GeoJSON projection for the map, shared by web and mobile. Each app reads the layers through
 // its own hooks, so only the fetching is per-app; the feature properties are a contract with the layer
@@ -207,10 +208,15 @@ export interface SavedPlacePin {
   id: string;
   placeId?: string | null;
   label: string;
-  icon?: string | null;
+  category?: string | null;
   isFavorite: boolean;
   latitude?: number | null;
   longitude?: number | null;
+}
+
+function glyphProp(category: string | null | undefined): { glyph?: PlaceGlyph } {
+  const glyph = placeGlyph(category);
+  return glyph ? { glyph } : {};
 }
 
 export function savedPlaceFeatures(saved: readonly SavedPlacePin[]): FeatureCollection {
@@ -221,7 +227,8 @@ export function savedPlaceFeatures(saved: readonly SavedPlacePin[]): FeatureColl
       savedPlaceId: s.id,
       placeId: s.placeId ?? null,
       label: s.label,
-      icon: s.icon ?? null,
+      category: s.category ?? null,
+      ...glyphProp(s.category),
       isFavorite: s.isFavorite,
     })));
 }

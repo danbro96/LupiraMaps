@@ -6,6 +6,7 @@ import {
   CLUSTER, CLUSTER_COUNT_LAYOUT, CURRENT_FIX, HOTSPOT, PIN, PIN_LABEL_HALO_WIDTH, PIN_LABEL_LAYOUT, TRACK, VISIT, clusterRadius,
   contactPinFill, contactPinStroke, hotspotRadius,
 } from '@lupira/maps-tokens/mapPaint';
+import { placeGlyphImagePrefix, usePlaceGlyphImages } from './placeGlyphImages';
 import { useGeoJsonLayer, type LayerSpecSansSource } from './useGeoJsonLayer';
 
 /** The layers a click resolves against, by source (MapScreen queries them all at once). */
@@ -209,19 +210,28 @@ export function MovementLayer({ theme, visits, track, current }: CommonLayerProp
   return null;
 }
 
-/** Saved-place pins. */
+/** Saved-place pins; a place with a category glyph draws it inside a larger pin. */
 export function SavedPlacesLayer({ theme, features }: CommonLayerProps & { features: FeatureCollection }) {
   const map = useMap();
   const colors = MAP_COLORS[theme];
+  usePlaceGlyphImages(map);
 
   const layers: LayerSpecSansSource[] = [
     {
       id: 'saved-pins', type: 'circle',
       paint: {
-        'circle-radius': PIN.saved as never,
+        'circle-radius': ['case', ['has', 'glyph'], PIN.savedGlyph, PIN.saved] as never,
         'circle-color': colors.saved,
         'circle-stroke-width': PIN.strokeWidth,
         'circle-stroke-color': colors.ring,
+      },
+    },
+    {
+      id: 'saved-glyphs', type: 'symbol', filter: ['has', 'glyph'],
+      layout: {
+        'icon-image': ['concat', placeGlyphImagePrefix(theme), ['get', 'glyph']] as never,
+        'icon-allow-overlap': true,
+        'icon-ignore-placement': true,
       },
     },
   ];

@@ -244,7 +244,7 @@ export default function MapScreen() {
       const p = f.properties!;
       return {
         key: `s:${p.savedPlaceId}`,
-        primary: p.icon ? `${p.icon} ${p.label}` : p.label,
+        primary: p.label,
         onClick: flyTo(f, p.placeId),
       };
     });
