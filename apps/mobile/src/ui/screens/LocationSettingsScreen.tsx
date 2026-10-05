@@ -5,7 +5,8 @@ import { useLocationTracking } from '../../state/location-tracking-store';
 import { useTrackingStatus } from '../../sync/locationTrackingStatus';
 import { runLocationUpload } from '../../sync/locationUploader';
 import { useConfirm } from '@danbro96/lupira-expo-paper/components/ConfirmDialog';
-import { SettingsAction, SettingsNote } from '../components/SettingsText';
+import { SettingsAction } from '@danbro96/lupira-expo-paper/components/SettingsAction';
+import { SettingsNote } from '@danbro96/lupira-expo-paper/components/SettingsNote';
 import { spacing } from '../theme';
 
 export function LocationSettingsScreen() {

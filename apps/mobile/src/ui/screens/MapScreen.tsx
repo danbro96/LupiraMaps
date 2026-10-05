@@ -14,6 +14,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { NativeSyntheticEvent } from 'react-native';
 import { StyleSheet, useColorScheme, useWindowDimensions, View } from 'react-native';
 import { ActivityIndicator, Banner, useTheme } from 'react-native-paper';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { mapViewport, type MapViewport } from '@danbro96/lupira-domain-places/geo';
 import type { HitAction } from '@lupira/maps-domain/mapHitLabels';
 import { hitsFromFeatures, type HitPoint, type MapHit } from '@lupira/maps-domain/mapHits';
@@ -63,6 +64,7 @@ const minuteNow = () => new Date(Math.floor(Date.now() / 60_000) * 60_000);
 
 export function MapScreen() {
   const paper = useTheme();
+  const insets = useSafeAreaInsets();
   const route = useRoute<RouteProp<RootStackParamList, 'Map'>>();
   const scheme = useColorScheme();
   const theme: MapTheme = scheme === 'dark' ? 'dark' : 'light';
@@ -293,8 +295,8 @@ export function MapScreen() {
             {selected && <SelectionPin point={selected} />}
           </MapView>
 
-          <LayersFab onPress={() => setSheetOpen(true)} style={styles.layersFab} />
-          <LocateFab mode={follow} onPress={() => void onLocatePress()} style={styles.locateFab} />
+          <LayersFab onPress={() => setSheetOpen(true)} style={[styles.layersFab, { bottom: insets.bottom + 88 }]} />
+          <LocateFab mode={follow} onPress={() => void onLocatePress()} style={[styles.locateFab, { bottom: insets.bottom + 24 }]} />
         </View>
       ) : (
         <View style={styles.loading}>
@@ -324,6 +326,6 @@ const styles = StyleSheet.create({
   mapWrap: { flex: 1 },
   map: { flex: 1 },
   loading: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  layersFab: { position: 'absolute', right: 16, bottom: 88 },
-  locateFab: { position: 'absolute', right: 16, bottom: 24 },
+  layersFab: { position: 'absolute', right: 16 },
+  locateFab: { position: 'absolute', right: 16 },
 });
