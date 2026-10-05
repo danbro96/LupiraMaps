@@ -45,14 +45,14 @@ async function drainOnce(dbOverride?: Db): Promise<void> {
   const status = useTrackingStatus.getState();
   const now = Date.now();
 
-  // Housekeeping first: rows past the server's retention can never be accepted, and the queue needs
-  // a ceiling regardless.
-  await db.exclusive(async (tx) => {
-    await pruneExpired(tx, new Date(now - RETENTION_DAYS * 86_400_000).toISOString());
-    await trimToCap(tx, QUEUE_CAP_ROWS);
-  });
-
   try {
+    // Housekeeping first: rows past the server's retention can never be accepted, and the queue needs
+    // a ceiling regardless.
+    await db.exclusive(async (tx) => {
+      await pruneExpired(tx, new Date(now - RETENTION_DAYS * 86_400_000).toISOString());
+      await trimToCap(tx, QUEUE_CAP_ROWS);
+    });
+
     for (;;) {
       const nowIso = new Date().toISOString();
       const batch = await db.exclusive((tx) => pendingFixes(tx, nowIso, Math.min(BATCH_SIZE, MAX_BATCH_LINES)));

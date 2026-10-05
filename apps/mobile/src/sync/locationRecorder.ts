@@ -107,14 +107,19 @@ async function applyCadence(observed: MotionActivity): Promise<void> {
   if (observed === 'Unknown') return;
   const state = await loadCadence();
   const decision = nextCadence(state.activity, state.streakActivity, state.streak, observed);
+  if (decision.restart) {
+    logDebug('location', `cadence → ${decision.activity}`);
+    // Deliberately NOT stop-then-start: calling start again on a live task reconfigures the location
+    // request in place and leaves the foreground service up. Stopping first would mean re-starting a
+    // location FGS from the background, which Android 12+ forbids outright.
+    try {
+      await startUpdates(decision.activity);
+    } catch (e) {
+      logDebug('location', `cadence change failed: ${String(e)}`);
+      return;
+    }
+  }
   await saveCadence({ activity: decision.activity, streakActivity: observed, streak: decision.streak });
-  if (!decision.restart) return;
-
-  logDebug('location', `cadence → ${decision.activity}`);
-  // Deliberately NOT stop-then-start: calling start again on a live task reconfigures the location
-  // request in place and leaves the foreground service up. Stopping first would mean re-starting a
-  // location FGS from the background, which Android 12+ forbids outright.
-  await startUpdates(decision.activity);
 }
 
 async function startUpdates(activity: MotionActivity): Promise<void> {

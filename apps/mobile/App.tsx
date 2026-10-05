@@ -17,6 +17,7 @@ import { persistOptions, queryClient } from './src/sync/queryClient';
 import { startReachability } from './src/sync/reachability';
 import { RootStack } from './src/ui/navigation/RootStack';
 import { linking } from './src/ui/navigation/linking';
+import { logDebug } from '@danbro96/lupira-expo-diagnostics/log';
 import { useAutoUpdate } from '@danbro96/lupira-expo-diagnostics/useAutoUpdate';
 import { paperSettings } from '@danbro96/lupira-expo-paper/theme/paperSettings';
 import { SENTRY_DSN } from './src/config';
@@ -50,14 +51,16 @@ export default function App() {
       return;
     }
     void registerBackgroundUpload();
-    void usePrefs.getState().init();
-    void useLocationTracking.getState().init();
+    usePrefs.getState().init().catch((e) => logDebug('app', `prefs init failed: ${String(e)}`));
+    useLocationTracking.getState().init().catch((e) => logDebug('app', `tracking init failed: ${String(e)}`));
 
     // Tracking self-repair lives here: it may need to RESTART the location foreground service, which
     // Android only permits from the foreground.
     const stopReachability = startReachability();
     const appState = AppState.addEventListener('change', (next) => {
-      if (next === 'active') void useLocationTracking.getState().reconcile();
+      if (next === 'active') {
+        useLocationTracking.getState().reconcile().catch((e) => logDebug('app', `tracking reconcile failed: ${String(e)}`));
+      }
     });
     return () => {
       stopReachability();
