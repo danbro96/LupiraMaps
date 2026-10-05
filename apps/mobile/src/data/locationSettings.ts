@@ -1,4 +1,4 @@
-import type { Db } from '@danbro96/lupira-expo-sqlite/types';
+import type { Db, Tx } from '@danbro96/lupira-expo-sqlite/types';
 import { getMeta, setMeta } from './db/meta';
 
 /** Tracking settings live in the meta table so the recorder and uploader (sync layer) can read them
@@ -14,10 +14,14 @@ export type TrackingSettings = {
 
 export const defaultTrackingSettings = (): TrackingSettings => ({ enabled: false, paused: false });
 
-export async function loadTrackingSettings(db: Db): Promise<TrackingSettings> {
-  const stored = await db.exclusive((tx) => getMeta(tx, SETTINGS_KEY));
+export async function readTrackingSettings(tx: Tx): Promise<TrackingSettings> {
+  const stored = await getMeta(tx, SETTINGS_KEY);
   if (!stored) return defaultTrackingSettings();
   return { ...defaultTrackingSettings(), ...(JSON.parse(stored) as Partial<TrackingSettings>) };
+}
+
+export function loadTrackingSettings(db: Db): Promise<TrackingSettings> {
+  return db.exclusive(readTrackingSettings);
 }
 
 export async function saveTrackingSettings(db: Db, settings: TrackingSettings): Promise<void> {

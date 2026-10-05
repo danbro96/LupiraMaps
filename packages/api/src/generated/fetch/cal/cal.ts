@@ -10,35 +10,10 @@ import type {
   ContainerDto,
   GetHotspotsParams,
   HotspotDto,
-  ProblemDetails,
   SearchItemsParams
 } from '../../models';
 
 import { apiRequest } from '../../../transport';
-
-export type listContainersResponse200 = {
-  data: ContainerDto[]
-  status: 200
-}
-
-export type listContainersResponse401 = {
-  data: ProblemDetails
-  status: 401
-}
-
-export type listContainersResponse500 = {
-  data: ProblemDetails
-  status: 500
-}
-
-export type listContainersResponseSuccess = (listContainersResponse200) & {
-  headers: Headers;
-};
-export type listContainersResponseError = (listContainersResponse401 | listContainersResponse500) & {
-  headers: Headers;
-};
-
-export type listContainersResponse = (listContainersResponseSuccess | listContainersResponseError)
 
 export const getListContainersUrl = () => {
 
@@ -51,9 +26,9 @@ export const getListContainersUrl = () => {
 /**
  * @summary List the calendars the caller can access.
  */
-export const listContainers = async ( options?: Parameters<typeof apiRequest>[1]): Promise<listContainersResponse> => {
+export const listContainers = async ( options?: Parameters<typeof apiRequest>[1]): Promise<ContainerDto[]> => {
 
-  return apiRequest<listContainersResponse>(getListContainersUrl(),
+  return apiRequest<ContainerDto[]>(getListContainersUrl(),
   {
     ...options,
     method: 'GET'
@@ -62,40 +37,6 @@ export const listContainers = async ( options?: Parameters<typeof apiRequest>[1]
   }
 );}
 
-
-export type searchItemsResponse200 = {
-  data: CalendarItemOccurrenceDto[]
-  status: 200
-}
-
-export type searchItemsResponse400 = {
-  data: ProblemDetails
-  status: 400
-}
-
-export type searchItemsResponse401 = {
-  data: ProblemDetails
-  status: 401
-}
-
-export type searchItemsResponse403 = {
-  data: ProblemDetails
-  status: 403
-}
-
-export type searchItemsResponse500 = {
-  data: ProblemDetails
-  status: 500
-}
-
-export type searchItemsResponseSuccess = (searchItemsResponse200) & {
-  headers: Headers;
-};
-export type searchItemsResponseError = (searchItemsResponse400 | searchItemsResponse401 | searchItemsResponse403 | searchItemsResponse500) & {
-  headers: Headers;
-};
-
-export type searchItemsResponse = (searchItemsResponseSuccess | searchItemsResponseError)
 
 export const getSearchItemsUrl = (params?: SearchItemsParams,) => {
   const normalizedParams = new URLSearchParams();
@@ -115,9 +56,9 @@ export const getSearchItemsUrl = (params?: SearchItemsParams,) => {
 /**
  * @summary Search calendar items (text + tag + parent + attendee contact + category/status filter; recurrence expanded in-window; from/to match occurrences overlapping the window). Text queries and parent/contact filters with no from/to match all-time; otherwise the window defaults to ±1 year. skip/take page over occurrences sorted by start (desc=true for newest first). Only items accepted into a calendar you can read.
  */
-export const searchItems = async (params?: SearchItemsParams, options?: Parameters<typeof apiRequest>[1]): Promise<searchItemsResponse> => {
+export const searchItems = async (params?: SearchItemsParams, options?: Parameters<typeof apiRequest>[1]): Promise<CalendarItemOccurrenceDto[]> => {
 
-  return apiRequest<searchItemsResponse>(getSearchItemsUrl(params),
+  return apiRequest<CalendarItemOccurrenceDto[]>(getSearchItemsUrl(params),
   {
     ...options,
     method: 'GET'
@@ -126,35 +67,6 @@ export const searchItems = async (params?: SearchItemsParams, options?: Paramete
   }
 );}
 
-
-export type getItemResponse200 = {
-  data: CalendarItemDto
-  status: 200
-}
-
-export type getItemResponse401 = {
-  data: ProblemDetails
-  status: 401
-}
-
-export type getItemResponse404 = {
-  data: ProblemDetails
-  status: 404
-}
-
-export type getItemResponse500 = {
-  data: ProblemDetails
-  status: 500
-}
-
-export type getItemResponseSuccess = (getItemResponse200) & {
-  headers: Headers;
-};
-export type getItemResponseError = (getItemResponse401 | getItemResponse404 | getItemResponse500) & {
-  headers: Headers;
-};
-
-export type getItemResponse = (getItemResponseSuccess | getItemResponseError)
 
 export const getGetItemUrl = (id: string,) => {
 
@@ -167,9 +79,9 @@ export const getGetItemUrl = (id: string,) => {
 /**
  * @summary Get a single calendar item.
  */
-export const getItem = async (id: string, options?: Parameters<typeof apiRequest>[1]): Promise<getItemResponse> => {
+export const getItem = async (id: string, options?: Parameters<typeof apiRequest>[1]): Promise<CalendarItemDto> => {
 
-  return apiRequest<getItemResponse>(getGetItemUrl(id),
+  return apiRequest<CalendarItemDto>(getGetItemUrl(id),
   {
     ...options,
     method: 'GET'
@@ -178,30 +90,6 @@ export const getItem = async (id: string, options?: Parameters<typeof apiRequest
   }
 );}
 
-
-export type getItemsByPlaceResponse200 = {
-  data: CalendarItemDto[]
-  status: 200
-}
-
-export type getItemsByPlaceResponse401 = {
-  data: ProblemDetails
-  status: 401
-}
-
-export type getItemsByPlaceResponse500 = {
-  data: ProblemDetails
-  status: 500
-}
-
-export type getItemsByPlaceResponseSuccess = (getItemsByPlaceResponse200) & {
-  headers: Headers;
-};
-export type getItemsByPlaceResponseError = (getItemsByPlaceResponse401 | getItemsByPlaceResponse500) & {
-  headers: Headers;
-};
-
-export type getItemsByPlaceResponse = (getItemsByPlaceResponseSuccess | getItemsByPlaceResponseError)
 
 export const getGetItemsByPlaceUrl = (placeId: string,) => {
 
@@ -214,9 +102,9 @@ export const getGetItemsByPlaceUrl = (placeId: string,) => {
 /**
  * @summary Calendar items anchored to a LupiraGeoApi place (its location, or a travel endpoint). Only items in a calendar you can read.
  */
-export const getItemsByPlace = async (placeId: string, options?: Parameters<typeof apiRequest>[1]): Promise<getItemsByPlaceResponse> => {
+export const getItemsByPlace = async (placeId: string, options?: Parameters<typeof apiRequest>[1]): Promise<CalendarItemDto[]> => {
 
-  return apiRequest<getItemsByPlaceResponse>(getGetItemsByPlaceUrl(placeId),
+  return apiRequest<CalendarItemDto[]>(getGetItemsByPlaceUrl(placeId),
   {
     ...options,
     method: 'GET'
@@ -225,40 +113,6 @@ export const getItemsByPlace = async (placeId: string, options?: Parameters<type
   }
 );}
 
-
-export type getHotspotsResponse200 = {
-  data: HotspotDto[]
-  status: 200
-}
-
-export type getHotspotsResponse400 = {
-  data: ProblemDetails
-  status: 400
-}
-
-export type getHotspotsResponse401 = {
-  data: ProblemDetails
-  status: 401
-}
-
-export type getHotspotsResponse403 = {
-  data: ProblemDetails
-  status: 403
-}
-
-export type getHotspotsResponse500 = {
-  data: ProblemDetails
-  status: 500
-}
-
-export type getHotspotsResponseSuccess = (getHotspotsResponse200) & {
-  headers: Headers;
-};
-export type getHotspotsResponseError = (getHotspotsResponse400 | getHotspotsResponse401 | getHotspotsResponse403 | getHotspotsResponse500) & {
-  headers: Headers;
-};
-
-export type getHotspotsResponse = (getHotspotsResponseSuccess | getHotspotsResponseError)
 
 export const getGetHotspotsUrl = (params?: GetHotspotsParams,) => {
   const normalizedParams = new URLSearchParams();
@@ -278,9 +132,9 @@ export const getGetHotspotsUrl = (params?: GetHotspotsParams,) => {
 /**
  * @summary Places where your events and photos concentrate, derived at read time and ranked by active days (distinct UTC days with an event occurrence or a photo). Events come from calendars you can read (or calendarId), photos are your own. Defaults: all-time up to now, minDays 3, limit 100. A hotspot carries the LupiraGeoApi PlaceId it anchors to, else a reverse-geocoded label.
  */
-export const getHotspots = async (params?: GetHotspotsParams, options?: Parameters<typeof apiRequest>[1]): Promise<getHotspotsResponse> => {
+export const getHotspots = async (params?: GetHotspotsParams, options?: Parameters<typeof apiRequest>[1]): Promise<HotspotDto[]> => {
 
-  return apiRequest<getHotspotsResponse>(getGetHotspotsUrl(params),
+  return apiRequest<HotspotDto[]>(getGetHotspotsUrl(params),
   {
     ...options,
     method: 'GET'

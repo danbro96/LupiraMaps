@@ -13,7 +13,6 @@ import { useLocationTracking } from './src/state/location-tracking-store';
 import { usePrefs } from './src/state/prefs-store';
 import { registerBackgroundUpload } from './src/sync/backgroundTask';
 import { persistOptions, queryClient } from './src/sync/queryClient';
-import { startReachability } from './src/sync/reachability';
 import { RootStack } from './src/ui/navigation/RootStack';
 import { linking } from './src/ui/navigation/linking';
 import { logDebug } from '@danbro96/lupira-expo-diagnostics/log';
@@ -21,8 +20,12 @@ import { useAutoUpdate } from '@danbro96/lupira-expo-diagnostics/useAutoUpdate';
 import { paperSettings } from '@danbro96/lupira-expo-paper/theme/paperSettings';
 import { SENTRY_DSN } from './src/config';
 import { initSentry } from '@danbro96/lupira-expo-diagnostics/initSentry';
+import { connectFocusManager } from '@danbro96/lupira-expo-query/focus';
+import { connectOnlineManager } from '@danbro96/lupira-expo-query/online';
 
 initSentry(SENTRY_DSN);
+connectOnlineManager();
+connectFocusManager();
 
 export default function App() {
   useAutoUpdate();
@@ -47,16 +50,12 @@ export default function App() {
 
     // Tracking self-repair lives here: it may need to RESTART the location foreground service, which
     // Android only permits from the foreground.
-    const stopReachability = startReachability();
     const appState = AppState.addEventListener('change', (next) => {
       if (next === 'active') {
         useLocationTracking.getState().reconcile().catch((e) => logDebug('app', `tracking reconcile failed: ${String(e)}`));
       }
     });
-    return () => {
-      stopReachability();
-      appState.remove();
-    };
+    return () => appState.remove();
   }, [loaded, authed]);
 
   if (!loaded) return null;   // hydration gate — avoids a login flash over a persisted session

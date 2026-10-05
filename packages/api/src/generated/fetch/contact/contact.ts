@@ -10,37 +10,12 @@ import type {
   ListContactRelationsParams,
   MeDto,
   PlaceEntryDto,
-  ProblemDetails,
   ResidencyDto,
   SearchContactsParams,
   SetEntryCodeRequest
 } from '../../models';
 
 import { apiRequest } from '../../../transport';
-
-export type getMeResponse200 = {
-  data: MeDto
-  status: 200
-}
-
-export type getMeResponse401 = {
-  data: ProblemDetails
-  status: 401
-}
-
-export type getMeResponse500 = {
-  data: ProblemDetails
-  status: 500
-}
-
-export type getMeResponseSuccess = (getMeResponse200) & {
-  headers: Headers;
-};
-export type getMeResponseError = (getMeResponse401 | getMeResponse500) & {
-  headers: Headers;
-};
-
-export type getMeResponse = (getMeResponseSuccess | getMeResponseError)
 
 export const getGetMeUrl = () => {
 
@@ -53,9 +28,9 @@ export const getGetMeUrl = () => {
 /**
  * @summary The caller's resolved local identity (JIT-provisioned on first login). While no contact is linked, one carrying the login email in a readable book is linked.
  */
-export const getMe = async ( options?: Parameters<typeof apiRequest>[1]): Promise<getMeResponse> => {
+export const getMe = async ( options?: Parameters<typeof apiRequest>[1]): Promise<MeDto> => {
 
-  return apiRequest<getMeResponse>(getGetMeUrl(),
+  return apiRequest<MeDto>(getGetMeUrl(),
   {
     ...options,
     method: 'GET'
@@ -64,35 +39,6 @@ export const getMe = async ( options?: Parameters<typeof apiRequest>[1]): Promis
   }
 );}
 
-
-export type searchContactsResponse200 = {
-  data: ContactDto[]
-  status: 200
-}
-
-export type searchContactsResponse401 = {
-  data: ProblemDetails
-  status: 401
-}
-
-export type searchContactsResponse403 = {
-  data: ProblemDetails
-  status: 403
-}
-
-export type searchContactsResponse500 = {
-  data: ProblemDetails
-  status: 500
-}
-
-export type searchContactsResponseSuccess = (searchContactsResponse200) & {
-  headers: Headers;
-};
-export type searchContactsResponseError = (searchContactsResponse401 | searchContactsResponse403 | searchContactsResponse500) & {
-  headers: Headers;
-};
-
-export type searchContactsResponse = (searchContactsResponseSuccess | searchContactsResponseError)
 
 export const getSearchContactsUrl = (params?: SearchContactsParams,) => {
   const normalizedParams = new URLSearchParams();
@@ -112,9 +58,9 @@ export const getSearchContactsUrl = (params?: SearchContactsParams,) => {
 /**
  * @summary Search contacts by name: every query word is a name part, or the name text contains the query (case/diacritic-insensitive).
  */
-export const searchContacts = async (params?: SearchContactsParams, options?: Parameters<typeof apiRequest>[1]): Promise<searchContactsResponse> => {
+export const searchContacts = async (params?: SearchContactsParams, options?: Parameters<typeof apiRequest>[1]): Promise<ContactDto[]> => {
 
-  return apiRequest<searchContactsResponse>(getSearchContactsUrl(params),
+  return apiRequest<ContactDto[]>(getSearchContactsUrl(params),
   {
     ...options,
     method: 'GET'
@@ -123,40 +69,6 @@ export const searchContacts = async (params?: SearchContactsParams, options?: Pa
   }
 );}
 
-
-export type listContactRelationsResponse200 = {
-  data: ContactRelationEntryDto[]
-  status: 200
-}
-
-export type listContactRelationsResponse401 = {
-  data: ProblemDetails
-  status: 401
-}
-
-export type listContactRelationsResponse403 = {
-  data: ProblemDetails
-  status: 403
-}
-
-export type listContactRelationsResponse404 = {
-  data: ProblemDetails
-  status: 404
-}
-
-export type listContactRelationsResponse500 = {
-  data: ProblemDetails
-  status: 500
-}
-
-export type listContactRelationsResponseSuccess = (listContactRelationsResponse200) & {
-  headers: Headers;
-};
-export type listContactRelationsResponseError = (listContactRelationsResponse401 | listContactRelationsResponse403 | listContactRelationsResponse404 | listContactRelationsResponse500) & {
-  headers: Headers;
-};
-
-export type listContactRelationsResponse = (listContactRelationsResponseSuccess | listContactRelationsResponseError)
 
 export const getListContactRelationsUrl = (id: string,
     params?: ListContactRelationsParams,) => {
@@ -178,9 +90,9 @@ export const getListContactRelationsUrl = (id: string,
  * @summary The contact's relationships, identical whichever side stores them: each entry's kind is the other contact's role relative to this one and its label this contact's own name for them. Set includeInferred=true to also return kin derived from the parent/child graph (siblings, grandparents/-children, aunts/uncles, cousins, nieces/nephews), tagged Provenance=Inferred.
  */
 export const listContactRelations = async (id: string,
-    params?: ListContactRelationsParams, options?: Parameters<typeof apiRequest>[1]): Promise<listContactRelationsResponse> => {
+    params?: ListContactRelationsParams, options?: Parameters<typeof apiRequest>[1]): Promise<ContactRelationEntryDto[]> => {
 
-  return apiRequest<listContactRelationsResponse>(getListContactRelationsUrl(id,params),
+  return apiRequest<ContactRelationEntryDto[]>(getListContactRelationsUrl(id,params),
   {
     ...options,
     method: 'GET'
@@ -189,30 +101,6 @@ export const listContactRelations = async (id: string,
   }
 );}
 
-
-export type listResidenciesResponse200 = {
-  data: ResidencyDto[]
-  status: 200
-}
-
-export type listResidenciesResponse401 = {
-  data: ProblemDetails
-  status: 401
-}
-
-export type listResidenciesResponse500 = {
-  data: ProblemDetails
-  status: 500
-}
-
-export type listResidenciesResponseSuccess = (listResidenciesResponse200) & {
-  headers: Headers;
-};
-export type listResidenciesResponseError = (listResidenciesResponse401 | listResidenciesResponse500) & {
-  headers: Headers;
-};
-
-export type listResidenciesResponse = (listResidenciesResponseSuccess | listResidenciesResponseError)
 
 export const getListResidenciesUrl = () => {
 
@@ -225,9 +113,9 @@ export const getListResidenciesUrl = () => {
 /**
  * @summary Every residency of a contact the caller can read — who lives, holidays and works where.
  */
-export const listResidencies = async ( options?: Parameters<typeof apiRequest>[1]): Promise<listResidenciesResponse> => {
+export const listResidencies = async ( options?: Parameters<typeof apiRequest>[1]): Promise<ResidencyDto[]> => {
 
-  return apiRequest<listResidenciesResponse>(getListResidenciesUrl(),
+  return apiRequest<ResidencyDto[]>(getListResidenciesUrl(),
   {
     ...options,
     method: 'GET'
@@ -236,35 +124,6 @@ export const listResidencies = async ( options?: Parameters<typeof apiRequest>[1
   }
 );}
 
-
-export type getPlaceEntryResponse200 = {
-  data: PlaceEntryDto
-  status: 200
-}
-
-export type getPlaceEntryResponse401 = {
-  data: ProblemDetails
-  status: 401
-}
-
-export type getPlaceEntryResponse404 = {
-  data: ProblemDetails
-  status: 404
-}
-
-export type getPlaceEntryResponse500 = {
-  data: ProblemDetails
-  status: 500
-}
-
-export type getPlaceEntryResponseSuccess = (getPlaceEntryResponse200) & {
-  headers: Headers;
-};
-export type getPlaceEntryResponseError = (getPlaceEntryResponse401 | getPlaceEntryResponse404 | getPlaceEntryResponse500) & {
-  headers: Headers;
-};
-
-export type getPlaceEntryResponse = (getPlaceEntryResponseSuccess | getPlaceEntryResponseError)
 
 export const getGetPlaceEntryUrl = (placeId: string,) => {
 
@@ -277,9 +136,9 @@ export const getGetPlaceEntryUrl = (placeId: string,) => {
 /**
  * @summary The door and gate codes at a place. Visible while the caller can read a contact currently living there; otherwise 404.
  */
-export const getPlaceEntry = async (placeId: string, options?: Parameters<typeof apiRequest>[1]): Promise<getPlaceEntryResponse> => {
+export const getPlaceEntry = async (placeId: string, options?: Parameters<typeof apiRequest>[1]): Promise<PlaceEntryDto> => {
 
-  return apiRequest<getPlaceEntryResponse>(getGetPlaceEntryUrl(placeId),
+  return apiRequest<PlaceEntryDto>(getGetPlaceEntryUrl(placeId),
   {
     ...options,
     method: 'GET'
@@ -288,45 +147,6 @@ export const getPlaceEntry = async (placeId: string, options?: Parameters<typeof
   }
 );}
 
-
-export type setEntryCodeResponse200 = {
-  data: PlaceEntryDto
-  status: 200
-}
-
-export type setEntryCodeResponse400 = {
-  data: ProblemDetails
-  status: 400
-}
-
-export type setEntryCodeResponse401 = {
-  data: ProblemDetails
-  status: 401
-}
-
-export type setEntryCodeResponse403 = {
-  data: ProblemDetails
-  status: 403
-}
-
-export type setEntryCodeResponse404 = {
-  data: ProblemDetails
-  status: 404
-}
-
-export type setEntryCodeResponse500 = {
-  data: ProblemDetails
-  status: 500
-}
-
-export type setEntryCodeResponseSuccess = (setEntryCodeResponse200) & {
-  headers: Headers;
-};
-export type setEntryCodeResponseError = (setEntryCodeResponse400 | setEntryCodeResponse401 | setEntryCodeResponse403 | setEntryCodeResponse404 | setEntryCodeResponse500) & {
-  headers: Headers;
-};
-
-export type setEntryCodeResponse = (setEntryCodeResponseSuccess | setEntryCodeResponseError)
 
 export const getSetEntryCodeUrl = (placeId: string,
     codeId: string,) => {
@@ -342,7 +162,7 @@ export const getSetEntryCodeUrl = (placeId: string,
  */
 export const setEntryCode = async (placeId: string,
     codeId: string,
-    setEntryCodeRequest: SetEntryCodeRequest, options?: Parameters<typeof apiRequest>[1]): Promise<setEntryCodeResponse> => {
+    setEntryCodeRequest: SetEntryCodeRequest, options?: Parameters<typeof apiRequest>[1]): Promise<PlaceEntryDto> => {
 
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
@@ -358,7 +178,7 @@ export const setEntryCode = async (placeId: string,
     }
     return headers;
   };
-return apiRequest<setEntryCodeResponse>(getSetEntryCodeUrl(placeId,codeId),
+return apiRequest<PlaceEntryDto>(getSetEntryCodeUrl(placeId,codeId),
   {
     ...options,
     method: 'PUT',
@@ -367,40 +187,6 @@ return apiRequest<setEntryCodeResponse>(getSetEntryCodeUrl(placeId,codeId),
   }
 );}
 
-
-export type removeEntryCodeResponse200 = {
-  data: PlaceEntryDto
-  status: 200
-}
-
-export type removeEntryCodeResponse401 = {
-  data: ProblemDetails
-  status: 401
-}
-
-export type removeEntryCodeResponse403 = {
-  data: ProblemDetails
-  status: 403
-}
-
-export type removeEntryCodeResponse404 = {
-  data: ProblemDetails
-  status: 404
-}
-
-export type removeEntryCodeResponse500 = {
-  data: ProblemDetails
-  status: 500
-}
-
-export type removeEntryCodeResponseSuccess = (removeEntryCodeResponse200) & {
-  headers: Headers;
-};
-export type removeEntryCodeResponseError = (removeEntryCodeResponse401 | removeEntryCodeResponse403 | removeEntryCodeResponse404 | removeEntryCodeResponse500) & {
-  headers: Headers;
-};
-
-export type removeEntryCodeResponse = (removeEntryCodeResponseSuccess | removeEntryCodeResponseError)
 
 export const getRemoveEntryCodeUrl = (placeId: string,
     codeId: string,) => {
@@ -415,9 +201,9 @@ export const getRemoveEntryCodeUrl = (placeId: string,
  * @summary Remove a code. Needs write on a contact currently living there.
  */
 export const removeEntryCode = async (placeId: string,
-    codeId: string, options?: Parameters<typeof apiRequest>[1]): Promise<removeEntryCodeResponse> => {
+    codeId: string, options?: Parameters<typeof apiRequest>[1]): Promise<PlaceEntryDto> => {
 
-  return apiRequest<removeEntryCodeResponse>(getRemoveEntryCodeUrl(placeId,codeId),
+  return apiRequest<PlaceEntryDto>(getRemoveEntryCodeUrl(placeId,codeId),
   {
     ...options,
     method: 'DELETE'

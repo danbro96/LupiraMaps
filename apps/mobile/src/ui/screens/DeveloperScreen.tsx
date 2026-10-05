@@ -1,13 +1,13 @@
 import { DeveloperScreen as DiagnosticsScreen } from '@danbro96/lupira-expo-diagnostics/DeveloperScreen';
+import { useOnline } from '@danbro96/lupira-expo-query/online';
 import { API_PRESETS, DIAGNOSTIC_ROUTES } from '../../config';
 import { useAuth } from '../../state/auth-store';
 import { useTrackingStatus } from '../../sync/locationTrackingStatus';
-import { useReachability } from '../../sync/reachability';
 
 /** Reachable from Settings and from the login screen (switching backends must not require signing in first). */
 export function DeveloperScreen() {
   const { apiUrl, authMode } = useAuth();
-  const reachability = useReachability();
+  const online = useOnline();
   const tracking = useTrackingStatus();
   return (
     <DiagnosticsScreen
@@ -17,7 +17,7 @@ export function DeveloperScreen() {
       authMode={authMode}
       onSelectBackend={(urls, mode) => void useAuth.getState().setBackend(urls, mode)}
       customUrlPlaceholder="http://host:5182"
-      syncState={{ ...reachability, tracking }}
+      syncState={{ online, tracking }}
     />
   );
 }

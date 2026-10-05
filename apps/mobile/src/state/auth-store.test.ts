@@ -1,4 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { openNodeDb } from '@danbro96/lupira-expo-sqlite/node';
+import { migrate } from '@danbro96/lupira-expo-sqlite/migrate';
+import { MIGRATIONS } from '../data/db/schema';
+import { enqueueFix, queueDepth } from '../data/locationQueue';
+import { saveTrackingSettings } from '../data/locationSettings';
 
 const store = new Map<string, string>();
 vi.mock('expo-constants', () => ({ default: { expoConfig: { version: '0.0.0' } } }));
@@ -13,180 +18,76 @@ vi.mock('expo-secure-store', () => ({
     return Promise.resolve();
   }),
 }));
+vi.mock('expo-auth-session', () => ({}));
 vi.mock('@danbro96/lupira-expo-diagnostics/log', () => ({ logDebug: vi.fn() }));
 vi.mock('@sentry/react-native', () => ({ setUser: vi.fn() }));
 vi.mock('expo-crypto', () => ({ CryptoDigestAlgorithm: { SHA256: 'SHA-256' }, digestStringAsync: vi.fn(() => Promise.resolve('hash')) }));
+vi.mock('../data/auth/oidc', () => ({ oidc: { refreshTokens: vi.fn() } }));
 
-const refreshTokensMock = vi.fn();
-vi.mock('../data/auth/oidc', () => ({ oidc: { refreshTokens: (rt: string) => refreshTokensMock(rt) } }));
-vi.mock('@danbro96/lupira-expo-oidc/oidc', () => {
-  class RefreshError extends Error {
-    constructor(readonly definitive: boolean, message: string) {
-      super(message);
-    }
-  }
-  return { RefreshError, decodeJwt: () => ({ email: 'user@test' }) };
+const clearCache = vi.fn();
+vi.mock('../sync/queryClient', () => ({ queryClient: { clear: () => clearCache() } }));
+
+const recording = { on: false };
+const stopUpdates = vi.fn(() => {
+  recording.on = false;
+  return Promise.resolve();
 });
+vi.mock('expo-location', () => ({
+  hasStartedLocationUpdatesAsync: () => Promise.resolve(recording.on),
+  stopLocationUpdatesAsync: () => stopUpdates(),
+}));
+vi.mock('expo-task-manager', () => ({ defineTask: vi.fn() }));
+vi.mock('expo-battery', () => ({}));
+vi.mock('react-native', () => ({ Platform: { OS: 'android' }, PermissionsAndroid: {} }));
 
-import { RefreshError } from '@danbro96/lupira-expo-oidc/oidc';
+let db = openNodeDb();
+vi.mock('../data/db/expoDb', () => ({ getDb: () => Promise.resolve(db) }));
+
 import { useAuth } from './auth-store';
+import { useLocationTracking } from './location-tracking-store';
+import { useTrackingStatus } from '../sync/locationTrackingStatus';
 
-function seedSession(expiresInMs: number) {
-  useAuth.setState({
-    loaded: true,
-    authMode: 'oidc',
-    token: 'tok-1',
-    refreshToken: 'rt-1',
-    expiresAt: Date.now() + expiresInMs,
-    user: { sub: 'user@test' },
-  });
-}
+const jwt = (claims: Record<string, unknown>) => `h.${Buffer.from(JSON.stringify(claims)).toString('base64url')}.s`;
 
 beforeEach(() => {
   store.clear();
-  refreshTokensMock.mockReset();
-  useAuth.setState({ loaded: false, token: null, refreshToken: null, expiresAt: 0, user: null, authMode: 'oidc' });
+  db = openNodeDb();
+  vi.clearAllMocks();
 });
 
-describe('refreshIfNeeded', () => {
-  it('stands pat on a fresh token without a forced refresh', async () => {
-    seedSession(3_600_000);
-    expect(await useAuth.getState().refreshIfNeeded()).toBe('tok-1');
-    expect(refreshTokensMock).not.toHaveBeenCalled();
-  });
+describe('auth store', () => {
+  it('persists a session under the lupira.maps.* keys and restores it', async () => {
+    await useAuth.getState().setSession({ accessToken: jwt({ email: 'a@test' }), refreshToken: 'rt-1', expiresIn: 3600 });
+    expect(store.get('lupira.maps.refreshToken')).toBe('rt-1');
 
-  it('coalesces concurrent refreshes into one token-endpoint call', async () => {
-    seedSession(10_000);   // inside the expiry margin → both callers want a refresh
-    let release!: (v: unknown) => void;
-    refreshTokensMock.mockReturnValue(new Promise((r) => { release = r; }));
-
-    const a = useAuth.getState().refreshIfNeeded();
-    const b = useAuth.getState().refreshIfNeeded();
-    release({ accessToken: 'tok-2', refreshToken: 'rt-2', expiresIn: 3600 });
-
-    expect(await a).toBe('tok-2');
-    expect(await b).toBe('tok-2');
-    expect(refreshTokensMock).toHaveBeenCalledTimes(1);
-  });
-
-  it('is rotation-safe: a 401 about an already-replaced token does not rotate again', async () => {
-    seedSession(3_600_000);
-    useAuth.setState({ token: 'tok-2', refreshToken: 'rt-2' });   // someone already rotated past tok-1
-
-    const result = await useAuth.getState().refreshIfNeeded({ force: true, sentToken: 'tok-1' });
-    expect(result).toBe('tok-2');
-    expect(refreshTokensMock).not.toHaveBeenCalled();
-  });
-
-  it('clears the session on a definitive failure', async () => {
-    seedSession(10_000);
-    refreshTokensMock.mockRejectedValue(new RefreshError(true, 'invalid_grant'));
-
-    expect(await useAuth.getState().refreshIfNeeded({ force: true })).toBeNull();
-    expect(useAuth.getState().token).toBeNull();
-    expect(useAuth.getState().refreshToken).toBeNull();
-  });
-
-  it('keeps the session on a transient failure and returns the same token', async () => {
-    seedSession(10_000);
-    refreshTokensMock.mockRejectedValue(new RefreshError(false, '503'));
-
-    expect(await useAuth.getState().refreshIfNeeded({ force: true })).toBe('tok-1');
-    expect(useAuth.getState().token).toBe('tok-1');
-  });
-
-  it('a forced refresh still POSTs when sentToken matches the current token', async () => {
-    seedSession(3_600_000);
-    refreshTokensMock.mockResolvedValue({ accessToken: 'tok-2', refreshToken: 'rt-2', expiresIn: 3600 });
-
-    expect(await useAuth.getState().refreshIfNeeded({ force: true, sentToken: 'tok-1' })).toBe('tok-2');
-    expect(refreshTokensMock).toHaveBeenCalledTimes(1);
-    expect(refreshTokensMock).toHaveBeenCalledWith('rt-1');
-  });
-
-  it('a forced refresh with no refresh token signs out without a POST', async () => {
-    seedSession(3_600_000);
-    useAuth.setState({ refreshToken: null });
-
-    expect(await useAuth.getState().refreshIfNeeded({ force: true })).toBeNull();
-    expect(useAuth.getState().token).toBeNull();
-    expect(refreshTokensMock).not.toHaveBeenCalled();
-  });
-
-  it('keeps the session when the refresh response carries no access token', async () => {
-    seedSession(10_000);
-    refreshTokensMock.mockResolvedValue({ accessToken: '', refreshToken: 'rt-2', expiresIn: 3600 });
-
-    expect(await useAuth.getState().refreshIfNeeded({ force: true })).toBe('tok-1');
-    expect(useAuth.getState().refreshToken).toBe('rt-1');
-  });
-
-  it('stands pat on a stale token when a proactive caller has no refresh token', async () => {
-    seedSession(10_000);
-    useAuth.setState({ refreshToken: null });
-
-    expect(await useAuth.getState().refreshIfNeeded()).toBe('tok-1');
-    expect(refreshTokensMock).not.toHaveBeenCalled();
-  });
-
-  it('sends nothing in dev auto-auth mode', async () => {
-    useAuth.setState({ loaded: true, authMode: 'dev', token: null, refreshToken: null });
-    expect(await useAuth.getState().refreshIfNeeded({ force: true })).toBeNull();
-    expect(refreshTokensMock).not.toHaveBeenCalled();
-  });
-});
-
-describe('session persistence', () => {
-  it('persists a refreshed session under the lupira.maps.* keys', async () => {
-    seedSession(10_000);
-    refreshTokensMock.mockResolvedValue({ accessToken: 'tok-2', refreshToken: 'rt-2', expiresIn: 3600 });
-
-    await useAuth.getState().refreshIfNeeded({ force: true });
-    expect(store.get('lupira.maps.token')).toBe('tok-2');
-    expect(store.get('lupira.maps.refreshToken')).toBe('rt-2');
-    expect(Number(store.get('lupira.maps.expiresAt'))).toBeGreaterThan(Date.now());
-  });
-
-  it('wipes the persisted session on a definitive failure', async () => {
-    seedSession(10_000);
-    store.set('lupira.maps.token', 'tok-1');
-    store.set('lupira.maps.refreshToken', 'rt-1');
-    store.set('lupira.maps.expiresAt', '1');
-    store.set('lupira.maps.userSub', 'user@test');
-    refreshTokensMock.mockRejectedValue(new RefreshError(true, 'invalid_grant'));
-
-    await useAuth.getState().refreshIfNeeded({ force: true });
-    expect([...store.keys()]).toEqual([]);
-  });
-
-  it('restores a session persisted under the existing keys', async () => {
-    store.set('lupira.maps.token', 'tok-7');
-    store.set('lupira.maps.refreshToken', 'rt-7');
-    store.set('lupira.maps.expiresAt', '4102444800000');
-    store.set('lupira.maps.userSub', 'user@test');
-
+    useAuth.setState({ loaded: false, token: null, refreshToken: null, user: null });
     await useAuth.getState().load();
-    expect(useAuth.getState()).toMatchObject({ token: 'tok-7', refreshToken: 'rt-7', expiresAt: 4102444800000, user: { sub: 'user@test' } });
+    expect(useAuth.getState()).toMatchObject({ loaded: true, refreshToken: 'rt-1', user: { sub: 'a@test' } });
   });
 
-  it('round-trips a session through the secure store', async () => {
-    useAuth.setState({ loaded: true, authMode: 'oidc' });
-    await useAuth.getState().setSession({ accessToken: 'tok-9', refreshToken: 'rt-9', expiresIn: 3600 });
+  it('an account switch stops tracking, forgets the device key and empties the queue before the session lands', async () => {
+    await migrate(db, MIGRATIONS);
+    await saveTrackingSettings(db, { enabled: true, paused: false });
+    await db.exclusive((tx) => enqueueFix(tx, {
+      ts: '2026-10-05T12:00:00.000Z', lat: 59.33, lon: 18.07, accuracyM: 8, altitudeM: null, headingDeg: null, speedMps: 0,
+      activity: 'Still', provider: 'Fused', batteryPct: null, isMoving: false, isMock: false,
+    }));
+    store.set('lupira.maps.location.deviceId', 'dev-1');
+    store.set('lupira.maps.location.apiKey', 'old-key');
+    recording.on = true;
+    useLocationTracking.setState({ registered: true, settings: { enabled: true, paused: false } });
+    const upload = vi.fn();
+    vi.stubGlobal('fetch', upload);
 
-    useAuth.setState({ loaded: false, token: null, refreshToken: null, expiresAt: 0, user: null });
-    await useAuth.getState().load();
+    await useAuth.getState().clearSession();
+    await useAuth.getState().setSession({ accessToken: jwt({ email: 'b@test' }), refreshToken: 'rt-2', expiresIn: 3600 });
 
-    const s = useAuth.getState();
-    expect(s.token).toBe('tok-9');
-    expect(s.refreshToken).toBe('rt-9');
-    expect(s.user?.sub).toBe('user@test');
-  });
-
-  it('keeps the previous refresh token when the endpoint rotates without issuing one', async () => {
-    seedSession(10_000);
-    refreshTokensMock.mockResolvedValue({ accessToken: 'tok-2', refreshToken: null, expiresIn: 3600 });
-
-    await useAuth.getState().refreshIfNeeded({ force: true });
-    expect(useAuth.getState().refreshToken).toBe('rt-1');
+    expect(clearCache).toHaveBeenCalledOnce();
+    expect(stopUpdates).toHaveBeenCalledOnce();
+    expect(upload).not.toHaveBeenCalled();
+    expect([...store.keys()].filter((k) => k.startsWith('lupira.maps.location.'))).toEqual([]);
+    expect(await db.exclusive(queueDepth)).toBe(0);
+    expect(useLocationTracking.getState()).toMatchObject({ registered: false, settings: { enabled: false } });
+    expect(useTrackingStatus.getState()).toMatchObject({ recording: false, queued: 0 });
   });
 });

@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { onlineQuery } from '@danbro96/lupira-expo-query/onlineQuery';
 import { lookupPlaces } from '@lupira/maps-api/fetch/geo';
 import type { PlaceDto } from '@lupira/maps-api/models';
 import { PLACE_LOOKUP_MAX, chunk, distinctPlaceIds, toLocatedPlaces } from '@danbro96/lupira-domain-places/places';
@@ -13,17 +14,10 @@ const NO_PLACES = new Map<string, PlaceDto>();
 export function usePlaceCoords(placeIds: (string | null | undefined)[]): Map<string, PlaceDto> {
   const distinct = distinctPlaceIds(placeIds);
   const q = useQuery({
-    queryKey: ['places', 'coords', distinct],
+    ...onlineQuery(['places', 'coords', distinct], async () =>
+      (await Promise.all(chunk(distinct, PLACE_LOOKUP_MAX).map((ids) => lookupPlaces({ ids })))).flat()),
     enabled: distinct.length > 0,
     staleTime: 10 * 60_000,
-    queryFn: async () => {
-      const results = await Promise.all(chunk(distinct, PLACE_LOOKUP_MAX).map((ids) => lookupPlaces({ ids })));
-      // The fetch client returns a status union; narrowing per response keeps `data` typed as the list.
-      return results.flatMap((r) => {
-        if (r.status !== 200) throw new Error(`places lookup ${r.status}`);
-        return r.data;
-      });
-    },
   });
   return useMemo(() => (q.data ? toLocatedPlaces<PlaceDto>(q.data) : NO_PLACES), [q.data]);
 }

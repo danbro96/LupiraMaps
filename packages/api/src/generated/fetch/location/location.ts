@@ -12,7 +12,6 @@ import type {
   ListVisitsParams,
   LocationTripDto,
   LocationVisitDto,
-  ProblemDetails,
   PurgeLocationHistoryParams,
   RegisterDeviceRequest,
   RegisterDeviceResponse,
@@ -20,35 +19,6 @@ import type {
 } from '../../models';
 
 import { apiRequest } from '../../../transport';
-
-export type registerDeviceResponse200 = {
-  data: RegisterDeviceResponse
-  status: 200
-}
-
-export type registerDeviceResponse400 = {
-  data: ProblemDetails
-  status: 400
-}
-
-export type registerDeviceResponse401 = {
-  data: ProblemDetails
-  status: 401
-}
-
-export type registerDeviceResponse500 = {
-  data: ProblemDetails
-  status: 500
-}
-
-export type registerDeviceResponseSuccess = (registerDeviceResponse200) & {
-  headers: Headers;
-};
-export type registerDeviceResponseError = (registerDeviceResponse400 | registerDeviceResponse401 | registerDeviceResponse500) & {
-  headers: Headers;
-};
-
-export type registerDeviceResponse = (registerDeviceResponseSuccess | registerDeviceResponseError)
 
 export const getRegisterDeviceUrl = () => {
 
@@ -61,7 +31,7 @@ export const getRegisterDeviceUrl = () => {
 /**
  * @summary Register a device; returns the one-time ingest API key.
  */
-export const registerDevice = async (registerDeviceRequest: RegisterDeviceRequest, options?: Parameters<typeof apiRequest>[1]): Promise<registerDeviceResponse> => {
+export const registerDevice = async (registerDeviceRequest: RegisterDeviceRequest, options?: Parameters<typeof apiRequest>[1]): Promise<RegisterDeviceResponse> => {
 
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
@@ -77,7 +47,7 @@ export const registerDevice = async (registerDeviceRequest: RegisterDeviceReques
     }
     return headers;
   };
-return apiRequest<registerDeviceResponse>(getRegisterDeviceUrl(),
+return apiRequest<RegisterDeviceResponse>(getRegisterDeviceUrl(),
   {
     ...options,
     method: 'POST',
@@ -86,40 +56,6 @@ return apiRequest<registerDeviceResponse>(getRegisterDeviceUrl(),
   }
 );}
 
-
-export type retireDeviceResponse204 = {
-  data: void
-  status: 204
-}
-
-export type retireDeviceResponse400 = {
-  data: ProblemDetails
-  status: 400
-}
-
-export type retireDeviceResponse401 = {
-  data: ProblemDetails
-  status: 401
-}
-
-export type retireDeviceResponse404 = {
-  data: ProblemDetails
-  status: 404
-}
-
-export type retireDeviceResponse500 = {
-  data: ProblemDetails
-  status: 500
-}
-
-export type retireDeviceResponseSuccess = (retireDeviceResponse204) & {
-  headers: Headers;
-};
-export type retireDeviceResponseError = (retireDeviceResponse400 | retireDeviceResponse401 | retireDeviceResponse404 | retireDeviceResponse500) & {
-  headers: Headers;
-};
-
-export type retireDeviceResponse = (retireDeviceResponseSuccess | retireDeviceResponseError)
 
 export const getRetireDeviceUrl = (id: string,) => {
 
@@ -132,9 +68,9 @@ export const getRetireDeviceUrl = (id: string,) => {
 /**
  * @summary Retire a device (revokes its ingest keys).
  */
-export const retireDevice = async (id: string, options?: Parameters<typeof apiRequest>[1]): Promise<retireDeviceResponse> => {
+export const retireDevice = async (id: string, options?: Parameters<typeof apiRequest>[1]): Promise<void> => {
 
-  return apiRequest<retireDeviceResponse>(getRetireDeviceUrl(id),
+  return apiRequest<void>(getRetireDeviceUrl(id),
   {
     ...options,
     method: 'DELETE'
@@ -143,30 +79,6 @@ export const retireDevice = async (id: string, options?: Parameters<typeof apiRe
   }
 );}
 
-
-export type getCurrentLocationResponse200 = {
-  data: CurrentFixDto[]
-  status: 200
-}
-
-export type getCurrentLocationResponse401 = {
-  data: ProblemDetails
-  status: 401
-}
-
-export type getCurrentLocationResponse500 = {
-  data: ProblemDetails
-  status: 500
-}
-
-export type getCurrentLocationResponseSuccess = (getCurrentLocationResponse200) & {
-  headers: Headers;
-};
-export type getCurrentLocationResponseError = (getCurrentLocationResponse401 | getCurrentLocationResponse500) & {
-  headers: Headers;
-};
-
-export type getCurrentLocationResponse = (getCurrentLocationResponseSuccess | getCurrentLocationResponseError)
 
 export const getGetCurrentLocationUrl = (params?: GetCurrentLocationParams,) => {
   const normalizedParams = new URLSearchParams();
@@ -186,9 +98,9 @@ export const getGetCurrentLocationUrl = (params?: GetCurrentLocationParams,) => 
 /**
  * @summary Latest known location per device.
  */
-export const getCurrentLocation = async (params?: GetCurrentLocationParams, options?: Parameters<typeof apiRequest>[1]): Promise<getCurrentLocationResponse> => {
+export const getCurrentLocation = async (params?: GetCurrentLocationParams, options?: Parameters<typeof apiRequest>[1]): Promise<CurrentFixDto[]> => {
 
-  return apiRequest<getCurrentLocationResponse>(getGetCurrentLocationUrl(params),
+  return apiRequest<CurrentFixDto[]>(getGetCurrentLocationUrl(params),
   {
     ...options,
     method: 'GET'
@@ -197,30 +109,6 @@ export const getCurrentLocation = async (params?: GetCurrentLocationParams, opti
   }
 );}
 
-
-export type getThinnedTrackResponse200 = {
-  data: TrackPointDto[]
-  status: 200
-}
-
-export type getThinnedTrackResponse401 = {
-  data: ProblemDetails
-  status: 401
-}
-
-export type getThinnedTrackResponse500 = {
-  data: ProblemDetails
-  status: 500
-}
-
-export type getThinnedTrackResponseSuccess = (getThinnedTrackResponse200) & {
-  headers: Headers;
-};
-export type getThinnedTrackResponseError = (getThinnedTrackResponse401 | getThinnedTrackResponse500) & {
-  headers: Headers;
-};
-
-export type getThinnedTrackResponse = (getThinnedTrackResponseSuccess | getThinnedTrackResponseError)
 
 export const getGetThinnedTrackUrl = (params?: GetThinnedTrackParams,) => {
   const normalizedParams = new URLSearchParams();
@@ -240,9 +128,9 @@ export const getGetThinnedTrackUrl = (params?: GetThinnedTrackParams,) => {
 /**
  * @summary Server-downsampled track (one best-accuracy fix per time bucket).
  */
-export const getThinnedTrack = async (params?: GetThinnedTrackParams, options?: Parameters<typeof apiRequest>[1]): Promise<getThinnedTrackResponse> => {
+export const getThinnedTrack = async (params?: GetThinnedTrackParams, options?: Parameters<typeof apiRequest>[1]): Promise<TrackPointDto[]> => {
 
-  return apiRequest<getThinnedTrackResponse>(getGetThinnedTrackUrl(params),
+  return apiRequest<TrackPointDto[]>(getGetThinnedTrackUrl(params),
   {
     ...options,
     method: 'GET'
@@ -251,30 +139,6 @@ export const getThinnedTrack = async (params?: GetThinnedTrackParams, options?: 
   }
 );}
 
-
-export type listVisitsResponse200 = {
-  data: LocationVisitDto[]
-  status: 200
-}
-
-export type listVisitsResponse401 = {
-  data: ProblemDetails
-  status: 401
-}
-
-export type listVisitsResponse500 = {
-  data: ProblemDetails
-  status: 500
-}
-
-export type listVisitsResponseSuccess = (listVisitsResponse200) & {
-  headers: Headers;
-};
-export type listVisitsResponseError = (listVisitsResponse401 | listVisitsResponse500) & {
-  headers: Headers;
-};
-
-export type listVisitsResponse = (listVisitsResponseSuccess | listVisitsResponseError)
 
 export const getListVisitsUrl = (params?: ListVisitsParams,) => {
   const normalizedParams = new URLSearchParams();
@@ -294,9 +158,9 @@ export const getListVisitsUrl = (params?: ListVisitsParams,) => {
 /**
  * @summary Materialized stay-points over a time range.
  */
-export const listVisits = async (params?: ListVisitsParams, options?: Parameters<typeof apiRequest>[1]): Promise<listVisitsResponse> => {
+export const listVisits = async (params?: ListVisitsParams, options?: Parameters<typeof apiRequest>[1]): Promise<LocationVisitDto[]> => {
 
-  return apiRequest<listVisitsResponse>(getListVisitsUrl(params),
+  return apiRequest<LocationVisitDto[]>(getListVisitsUrl(params),
   {
     ...options,
     method: 'GET'
@@ -305,30 +169,6 @@ export const listVisits = async (params?: ListVisitsParams, options?: Parameters
   }
 );}
 
-
-export type listTripsResponse200 = {
-  data: LocationTripDto[]
-  status: 200
-}
-
-export type listTripsResponse401 = {
-  data: ProblemDetails
-  status: 401
-}
-
-export type listTripsResponse500 = {
-  data: ProblemDetails
-  status: 500
-}
-
-export type listTripsResponseSuccess = (listTripsResponse200) & {
-  headers: Headers;
-};
-export type listTripsResponseError = (listTripsResponse401 | listTripsResponse500) & {
-  headers: Headers;
-};
-
-export type listTripsResponse = (listTripsResponseSuccess | listTripsResponseError)
 
 export const getListTripsUrl = (params?: ListTripsParams,) => {
   const normalizedParams = new URLSearchParams();
@@ -348,9 +188,9 @@ export const getListTripsUrl = (params?: ListTripsParams,) => {
 /**
  * @summary Materialized trips over a time range.
  */
-export const listTrips = async (params?: ListTripsParams, options?: Parameters<typeof apiRequest>[1]): Promise<listTripsResponse> => {
+export const listTrips = async (params?: ListTripsParams, options?: Parameters<typeof apiRequest>[1]): Promise<LocationTripDto[]> => {
 
-  return apiRequest<listTripsResponse>(getListTripsUrl(params),
+  return apiRequest<LocationTripDto[]>(getListTripsUrl(params),
   {
     ...options,
     method: 'GET'
@@ -359,30 +199,6 @@ export const listTrips = async (params?: ListTripsParams, options?: Parameters<t
   }
 );}
 
-
-export type purgeLocationHistoryResponse204 = {
-  data: void
-  status: 204
-}
-
-export type purgeLocationHistoryResponse401 = {
-  data: ProblemDetails
-  status: 401
-}
-
-export type purgeLocationHistoryResponse500 = {
-  data: ProblemDetails
-  status: 500
-}
-
-export type purgeLocationHistoryResponseSuccess = (purgeLocationHistoryResponse204) & {
-  headers: Headers;
-};
-export type purgeLocationHistoryResponseError = (purgeLocationHistoryResponse401 | purgeLocationHistoryResponse500) & {
-  headers: Headers;
-};
-
-export type purgeLocationHistoryResponse = (purgeLocationHistoryResponseSuccess | purgeLocationHistoryResponseError)
 
 export const getPurgeLocationHistoryUrl = (params?: PurgeLocationHistoryParams,) => {
   const normalizedParams = new URLSearchParams();
@@ -402,9 +218,9 @@ export const getPurgeLocationHistoryUrl = (params?: PurgeLocationHistoryParams,)
 /**
  * @summary Purge raw fixes + derived docs in a time range (owner erase).
  */
-export const purgeLocationHistory = async (params?: PurgeLocationHistoryParams, options?: Parameters<typeof apiRequest>[1]): Promise<purgeLocationHistoryResponse> => {
+export const purgeLocationHistory = async (params?: PurgeLocationHistoryParams, options?: Parameters<typeof apiRequest>[1]): Promise<void> => {
 
-  return apiRequest<purgeLocationHistoryResponse>(getPurgeLocationHistoryUrl(params),
+  return apiRequest<void>(getPurgeLocationHistoryUrl(params),
   {
     ...options,
     method: 'DELETE'

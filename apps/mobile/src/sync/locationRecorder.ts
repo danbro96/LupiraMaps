@@ -5,7 +5,7 @@ import { migrate } from '@danbro96/lupira-expo-sqlite/migrate';
 import { MIGRATIONS } from '../data/db/schema';
 import { getMeta, setMeta } from '../data/db/meta';
 import { enqueueFix } from '../data/locationQueue';
-import { loadTrackingSettings } from '../data/locationSettings';
+import { readTrackingSettings } from '../data/locationSettings';
 import {
   CADENCE, MAX_USEFUL_ACCURACY_M, classifyActivity, isTimestampAcceptable, nextCadence,
   type MotionActivity,
@@ -60,15 +60,15 @@ async function recordFixes(locations: Location.LocationObject[]): Promise<void> 
   const db = await getDb();
   await migrate(db, MIGRATIONS);   // the task can run before any UI has mounted
 
-  const settings = await loadTrackingSettings(db);
-  if (!settings.enabled || settings.paused) return;
-
   const now = Date.now();
   // Read once per batch, not per fix — the server only surfaces it on /location/current anyway.
   const battery = await batteryPct();
   let observed: MotionActivity = 'Unknown';
 
-  await db.exclusive(async (tx) => {
+  const recorded = await db.exclusive(async (tx) => {
+    // Checked inside the write so an account reset that disables tracking can't be overtaken by this insert.
+    const settings = await readTrackingSettings(tx);
+    if (!settings.enabled || settings.paused) return false;
     for (const location of locations) {
       const ts = new Date(location.timestamp).toISOString();
       // A fix the server would reject outright is never worth queue space.
@@ -95,7 +95,9 @@ async function recordFixes(locations: Location.LocationObject[]): Promise<void> 
         isMock: location.mocked === true,
       });
     }
+    return true;
   });
+  if (!recorded) return;
 
   await useTrackingStatus.getState().refresh(db);
   await applyCadence(observed);

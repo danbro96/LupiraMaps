@@ -4,7 +4,7 @@ import { create } from 'zustand';
 import { getDb } from '../data/db/expoDb';
 import { migrate } from '@danbro96/lupira-expo-sqlite/migrate';
 import { MIGRATIONS } from '../data/db/schema';
-import { ensureDevice, forgetDevice, loadDevice } from '../data/locationDevice';
+import { clearDeviceCredentials, ensureDevice, forgetDevice, loadDevice } from '../data/locationDevice';
 import { clearQueue } from '../data/locationQueue';
 import { defaultTrackingSettings, loadTrackingSettings, saveTrackingSettings, type TrackingSettings } from '../data/locationSettings';
 import { purgeLocationHistory } from '@lupira/maps-api/fetch/location';
@@ -39,6 +39,9 @@ type TrackingActions = {
   unregister(): Promise<void>;
   /** Owner erase: deletes all server-side history plus anything still queued locally. */
   eraseHistory(): Promise<void>;
+  /** Another account signed in: the device key and queued fixes are the previous account's, so tracking stops
+   *  unpaired until the new account pairs again. Local only; the old device stays registered server-side. */
+  resetForNewAccount(): Promise<void>;
   /** Re-asserts reality on foreground: permissions may have been revoked, and an OEM battery manager
    *  (or a Play update replacing the package) can leave the service dead while the OS still reports
    *  it as started. Foreground-only by necessity — Android 12+ forbids starting a location foreground
@@ -152,6 +155,20 @@ export const useLocationTracking = create<TrackingState & TrackingActions>((set,
     await purgeLocationHistory();
     const db = await getDb();
     await db.exclusive((tx) => clearQueue(tx));
+    await useTrackingStatus.getState().refresh(db);
+  },
+
+  resetForNewAccount: async () => {
+    await stopRecording();
+    const db = await getDb();
+    await migrate(db, MIGRATIONS);
+    const settings = { ...(await loadTrackingSettings(db)), enabled: false };
+    await saveTrackingSettings(db, settings);
+    // Waits out an in-flight drain; with tracking disabled a new one returns before touching the key.
+    await runLocationUpload(db);
+    await clearDeviceCredentials();
+    await db.exclusive((tx) => clearQueue(tx));
+    set({ settings, registered: false });
     await useTrackingStatus.getState().refresh(db);
   },
 }));

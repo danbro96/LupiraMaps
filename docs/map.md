@@ -40,12 +40,12 @@ A missing basemap *sprite* is equally fatal (style stuck loading); `loadMapStyle
 
 ### Reads and the offline cache
 
-Every layer reads REST through hand-written hooks over the generated *fetchers* (`@lupira/maps-api/fetch/*`): occurrences (`GET /api/items` from/to), calendars, residencies + contacts + relations, place lookup, saved places, hotspots, photo cells, movement.
+Every layer reads REST through hand-written hooks: `useQuery(onlineQuery(key, fetcher))` (`@danbro96/lupira-expo-query`) over the generated body-only *fetchers* (`@lupira/maps-api/fetch/*`, which throw `ApiError`; a 404 is `e.status === 404`): occurrences (`GET /api/items` from/to), calendars, residencies + contacts + relations, place lookup, saved places, hotspots, photo cells, movement.
 
-- `sync/queryClient.ts` persists the read cache with `@tanstack/react-query-persist-client` over `expo-sqlite/kv-store` (no native dep beyond expo-sqlite, no AsyncStorage size cap): `shouldDehydrateQuery` keeps only the key roots the map draws (`map`, `places`, `occurrences`, `calendars`, `contacts`, `me`, `movement`), `maxAge` 7 days, `buster` = app version. `gcTime` matches `maxAge`, or the persister writes back an already-collected cache.
+- `sync/queryClient.ts` is `createAppQueryClient`: the read cache persists over `expo-sqlite/kv-store`, only the key roots the map draws (`map`, `places`, `occurrences`, `calendars`, `contacts`, `me`, `movement`), `maxAge` 7 days, `buster` = app version. `onlineQuery` = fresh 5 min, one retry for transient failures only.
 - Cached values must be JSON: `usePlaceCoords` caches the lookup list and builds its `Map` in `useMemo` (a `Map` serializes to `{}`).
-- `sync/reachability.ts` probes the BFF's `/livez` on start, on foreground, on connectivity change and every 30 s while away; React Query's `onlineManager` follows it, so reads pause on the cached data instead of failing. A transport error in any query triggers a probe.
-- Signing out clears the cache.
+- `App.tsx` calls `connectOnlineManager()` (NetInfo internet reachability drives `onlineManager`, so reads pause on the cached data offline instead of failing) and `connectFocusManager()` (stale queries refetch on return to the foreground). Screens read the flag via `useOnline()`.
+- Auth is `createAuthStore` (`@danbro96/lupira-expo-oidc/authStore`, keys `lupira.maps.*`). Signing out clears the cache; a sign-in as a different account (or the first one on the install) clears it and resets location tracking before the session lands (`onAccountChange`, see below).
 
 ## Location uploader (mobile)
 
@@ -53,6 +53,7 @@ The phone is the estate's only GPS uploader. `sync/locationRecorder.ts` records 
 
 - Ingest is hand-written (`sync/locationIngest.ts`): it authenticates with `Authorization: DeviceKey …`, which the generated client cannot express (the OpenAPI doc declares only a Bearer scheme). It posts to the BFF's `/ingest/location*` (`device` group), which checks the key's shape and forwards it untouched.
 - The device key is shown once at registration and lives in SecureStore, never in SQLite.
+- An account switch (`useLocationTracking.resetForNewAccount`) stops the recorder, disables tracking, waits out any in-flight drain, then deletes the device key and empties the queue, so no fix leaves with the previous account's key. The phone is unpaired until the new account enables tracking again; the old device stays registered server-side.
 - NDJSON lines are snake_case and must never carry principal/device ids — the server rejects the whole line.
 - Cadence adapts to speed but **accuracy stays High in every profile**: Balanced is ~100 m, above the server's 50 m cutoff, and still-mode is exactly when visits (80 m / ≥8 min) are detected — a cheap still profile silently yields zero visits.
 - Cadence changes call `startLocationUpdatesAsync` again rather than stop+start (Android 12+ forbids restarting a location FGS from the background).

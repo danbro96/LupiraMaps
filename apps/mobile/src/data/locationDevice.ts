@@ -25,10 +25,8 @@ export async function ensureDevice(label: string): Promise<LocationDevice> {
   const existing = await loadDevice();
   if (existing) return existing;
 
-  const response = await registerDevice({ kind: 'Phone', label });
-  if (response.status !== 200) throw new Error(`device registration failed (${response.status})`);
-
-  const device: LocationDevice = { deviceId: response.data.device.id, apiKey: response.data.apiKey };
+  const registered = await registerDevice({ kind: 'Phone', label });
+  const device: LocationDevice = { deviceId: registered.device.id, apiKey: registered.apiKey };
   await Promise.all([
     SecureStore.setItemAsync(KEYS.deviceId, device.deviceId),
     SecureStore.setItemAsync(KEYS.apiKey, device.apiKey),

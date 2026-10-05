@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { onlineQuery } from '@danbro96/lupira-expo-query/onlineQuery';
 import type { FeatureCollection } from 'geojson';
 import { getHotspots } from '@lupira/maps-api/fetch/cal';
 import { listSavedPlaces } from '@lupira/maps-api/fetch/geo';
@@ -67,13 +68,9 @@ export function useEventFeatures(fromDay: string, toDay: string, enabled: boolea
  *  than holding the whole library; thumbnails are presigned URLs valid for hours. */
 export function usePhotoFeatures(viewport: MapViewport | null, fromIso: string | null, enabled: boolean): FeatureCollection {
   const q = useQuery({
-    queryKey: ['map', 'photos', viewport?.bbox, viewport?.zoom, fromIso],
+    ...onlineQuery(['map', 'photos', viewport?.bbox, viewport?.zoom, fromIso], () =>
+      getPhotoMap({ ...viewport!, ...(fromIso ? { from: fromIso } : {}) })),
     enabled: enabled && viewport !== null,
-    queryFn: async () => {
-      const r = await getPhotoMap({ ...viewport!, ...(fromIso ? { from: fromIso } : {}) });
-      if (r.status !== 200) throw new Error(`photos map ${r.status}`);
-      return r.data;
-    },
   });
 
   return enabled ? photoFeatures(q.data?.features ?? []) : EMPTY_FEATURES;
@@ -113,15 +110,7 @@ export function useContactFeatures(enabled: boolean): FeatureCollection {
 
 /** Saved-place pins (favorites first is the API's order; gazetteer link or raw pin). */
 export function useSavedPlaceFeatures(enabled: boolean): FeatureCollection {
-  const q = useQuery({
-    queryKey: ['map', 'saved-places'],
-    enabled,
-    queryFn: async () => {
-      const r = await listSavedPlaces();
-      if (r.status !== 200) throw new Error(`saved places ${r.status}`);
-      return r.data;
-    },
-  });
+  const q = useQuery({ ...onlineQuery(['map', 'saved-places'], () => listSavedPlaces()), enabled });
 
   return enabled ? savedPlaceFeatures(q.data ?? []) : EMPTY_FEATURES;
 }
@@ -129,14 +118,9 @@ export function useSavedPlaceFeatures(enabled: boolean): FeatureCollection {
 /** Hotspots from `fromIso` (all-time when null) up to now, ranked by active days. */
 export function useHotspotFeatures(fromIso: string | null, enabled: boolean): FeatureCollection {
   const q = useQuery({
-    queryKey: ['map', 'hotspots', fromIso],
+    ...onlineQuery(['map', 'hotspots', fromIso], () => getHotspots(fromIso ? { from: fromIso } : undefined)),
     enabled,
     staleTime: 600_000,
-    queryFn: async () => {
-      const r = await getHotspots(fromIso ? { from: fromIso } : undefined);
-      if (r.status !== 200) throw new Error(`hotspots ${r.status}`);
-      return r.data;
-    },
   });
 
   return enabled ? hotspotFeatures(q.data ?? []) : EMPTY_FEATURES;

@@ -1,4 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
+import { ApiError } from '@danbro96/lupira-http/apiError';
+import { onlineQuery } from '@danbro96/lupira-expo-query/onlineQuery';
 import { residencyStatus } from '@danbro96/lupira-domain-contacts/fuzzyDate';
 import { parentsHomes, type ContactAddressRow, type ParentsHome } from '@danbro96/lupira-domain-contacts/residents';
 import { getPlaceEntry, listContactRelations, listResidencies, searchContacts } from '@lupira/maps-api/fetch/contact';
@@ -7,24 +9,8 @@ import type { PlaceEntryDto } from '@lupira/maps-api/models';
 /** Every readable contact's residencies as `@danbro96/lupira-domain-contacts/residents` rows (named). One pair of
  *  queries serves the map, quick places and the preview sheet, so they agree and share one place lookup. */
 export function useResidencyRows(enabled = true): ContactAddressRow[] {
-  const residencies = useQuery({
-    queryKey: ['contacts', 'residencies'],
-    enabled,
-    queryFn: async () => {
-      const r = await listResidencies();
-      if (r.status !== 200) throw new Error(`residencies ${r.status}`);
-      return r.data;
-    },
-  });
-  const contacts = useQuery({
-    queryKey: ['contacts', 'list'],
-    enabled,
-    queryFn: async () => {
-      const r = await searchContacts({});
-      if (r.status !== 200) throw new Error(`contacts ${r.status}`);
-      return r.data;
-    },
-  });
+  const residencies = useQuery({ ...onlineQuery(['contacts', 'residencies'], () => listResidencies()), enabled });
+  const contacts = useQuery({ ...onlineQuery(['contacts', 'list'], () => searchContacts({})), enabled });
   const names = new Map((contacts.data ?? []).map((c) => [c.id, c.displayName]));
   return (residencies.data ?? []).flatMap((r) => {
     const displayName = names.get(r.contactId);
@@ -38,13 +24,8 @@ export function useResidencyRows(enabled = true): ContactAddressRow[] {
 /** Where the contact's parents live now — derived from Parent relationships and their residencies, never stored. */
 export function useParentsHomes(contactId: string | null, rows: readonly ContactAddressRow[]): ParentsHome[] {
   const { data: relations } = useQuery({
-    queryKey: ['contacts', contactId, 'relations'],
+    ...onlineQuery(['contacts', contactId, 'relations'], () => listContactRelations(contactId!)),
     enabled: !!contactId,
-    queryFn: async () => {
-      const r = await listContactRelations(contactId!);
-      if (r.status !== 200) throw new Error(`relations ${r.status}`);
-      return r.data;
-    },
   });
   if (!contactId) return [];
   const parents = (relations ?? []).filter((r) => r.kind === 'Parent' && !r.ended && r.provenance !== 'Inferred')
@@ -57,13 +38,16 @@ export function useParentsHomes(contactId: string | null, rows: readonly Contact
 export function usePlaceEntry(placeId: string | null | undefined, rows: readonly ContactAddressRow[]): PlaceEntryDto | null {
   const lived = rows.some((r) => r.placeId === placeId && residencyStatus(r.movedIn, r.movedOut) === 'active');
   const q = useQuery({
-    queryKey: ['contacts', 'place-entry', placeId],
+    ...onlineQuery(['contacts', 'place-entry', placeId], async () => {
+      try {
+        return await getPlaceEntry(placeId!);
+      } catch (e) {
+        if (e instanceof ApiError && e.status === 404) return null;
+        throw e;
+      }
+    }),
     enabled: !!placeId && lived,
     retry: false,
-    queryFn: async () => {
-      const r = await getPlaceEntry(placeId!).catch(() => null);
-      return r?.status === 200 ? r.data : null;
-    },
   });
   return lived && q.data && q.data.codes.length > 0 ? q.data : null;
 }

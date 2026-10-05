@@ -6,35 +6,10 @@
  */
 import type {
   GetPhotoMapParams,
-  PhotoMapResponse,
-  ProblemDetails
+  PhotoMapResponse
 } from '../../models';
 
 import { apiRequest } from '../../../transport';
-
-export type getPhotoMapResponse200 = {
-  data: PhotoMapResponse
-  status: 200
-}
-
-export type getPhotoMapResponse401 = {
-  data: ProblemDetails
-  status: 401
-}
-
-export type getPhotoMapResponse500 = {
-  data: ProblemDetails
-  status: 500
-}
-
-export type getPhotoMapResponseSuccess = (getPhotoMapResponse200) & {
-  headers: Headers;
-};
-export type getPhotoMapResponseError = (getPhotoMapResponse401 | getPhotoMapResponse500) & {
-  headers: Headers;
-};
-
-export type getPhotoMapResponse = (getPhotoMapResponseSuccess | getPhotoMapResponseError)
 
 export const getGetPhotoMapUrl = (params: GetPhotoMapParams,) => {
   const normalizedParams = new URLSearchParams();
@@ -54,9 +29,9 @@ export const getGetPhotoMapUrl = (params: GetPhotoMapParams,) => {
 /**
  * @summary Geotagged Ready assets in a viewport as GeoJSON: a point per photo when at most 200 are in view or zoom >= 17, else a point per grid cell with its count.
  */
-export const getPhotoMap = async (params: GetPhotoMapParams, options?: Parameters<typeof apiRequest>[1]): Promise<getPhotoMapResponse> => {
+export const getPhotoMap = async (params: GetPhotoMapParams, options?: Parameters<typeof apiRequest>[1]): Promise<PhotoMapResponse> => {
 
-  return apiRequest<getPhotoMapResponse>(getGetPhotoMapUrl(params),
+  return apiRequest<PhotoMapResponse>(getGetPhotoMapUrl(params),
   {
     ...options,
     method: 'GET'
