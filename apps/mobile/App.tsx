@@ -1,5 +1,4 @@
 import { NavigationContainer } from '@react-navigation/native';
-import * as Sentry from '@sentry/react-native';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
@@ -21,17 +20,9 @@ import { logDebug } from '@danbro96/lupira-expo-diagnostics/log';
 import { useAutoUpdate } from '@danbro96/lupira-expo-diagnostics/useAutoUpdate';
 import { paperSettings } from '@danbro96/lupira-expo-paper/theme/paperSettings';
 import { SENTRY_DSN } from './src/config';
-import { UPDATE_CHANNEL, UPDATE_ID } from '@danbro96/lupira-expo-diagnostics/buildInfo';
+import { initSentry } from '@danbro96/lupira-expo-diagnostics/initSentry';
 
-Sentry.init({
-  dsn: SENTRY_DSN,
-  enabled: !!SENTRY_DSN,
-  tracesSampleRate: 0.2,
-  sendDefaultPii: false,
-  environment: __DEV__ ? 'development' : 'production',
-});
-Sentry.setTag('update_id', UPDATE_ID ?? 'none');
-Sentry.setTag('update_channel', UPDATE_CHANNEL ?? 'none');
+initSentry(SENTRY_DSN);
 
 export default function App() {
   useAutoUpdate();
