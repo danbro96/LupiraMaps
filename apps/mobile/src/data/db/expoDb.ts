@@ -1,3 +1,3 @@
 import { expoDb } from '@danbro96/lupira-expo-sqlite/expoDb';
 
-export const getDb = expoDb('lupira-maps.db');
+export const getDb = expoDb('lupira-maps.db', { serializeStatements: true });
