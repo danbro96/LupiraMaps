@@ -34,8 +34,9 @@ const SIZE_PX = 28;
 
 export const placeGlyphImagePrefix = (theme: MapTheme) => `${PREFIX}:${theme}:`;
 
-function glyphSvg(glyph: PlaceGlyph, color: string): string {
-  const paths = renderToStaticMarkup(createElement(GLYPH_ICONS[glyph])).match(/<path[^>]*>/g) ?? [];
+export function glyphSvg(glyph: PlaceGlyph, color: string): string {
+  const markup = renderToStaticMarkup(createElement(GLYPH_ICONS[glyph]));
+  const paths = [...markup.matchAll(/<path[^>]*\sd="([^"]+)"/g)].map(([, d]) => `<path d="${d}"/>`);
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="${SIZE_PX}" height="${SIZE_PX}" fill="${color}">${paths.join('')}</svg>`;
 }
 
@@ -45,6 +46,7 @@ function addGlyphImage(map: MapLibreMap, theme: MapTheme, glyph: PlaceGlyph) {
   image.onload = () => {
     if (!map.hasImage(id)) map.addImage(id, image, { pixelRatio: 2 });
   };
+  image.onerror = () => console.warn(`place glyph image failed to decode: ${id}`);
   image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(glyphSvg(glyph, MAP_COLORS[theme].ink))}`;
 }
 
