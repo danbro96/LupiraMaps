@@ -14,7 +14,7 @@ import type { Feature } from 'geojson';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { NativeSyntheticEvent } from 'react-native';
 import { StyleSheet, useColorScheme, useWindowDimensions, View } from 'react-native';
-import { ActivityIndicator, Banner, useTheme } from 'react-native-paper';
+import { ActivityIndicator, Banner } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { mapViewport, type GeoPoint, type MapViewport } from '@danbro96/lupira-domain-places/geo';
 import type { HitAction } from '@lupira/maps-domain/mapHitLabels';
@@ -27,6 +27,10 @@ import { ymd } from '@danbro96/lupira-domain-core/time';
 import type { MapTheme } from '@danbro96/lupira-tokens-map/map';
 import { fallbackStyle } from '../../data/mapStyle';
 import { toastError } from '@danbro96/lupira-expo-feedback/toast';
+import { Screen } from '@danbro96/lupira-expo-paper/components/Screen';
+import { StatusBanner } from '@danbro96/lupira-expo-paper/components/StatusBanner';
+import { offlineBannerState } from '@danbro96/lupira-expo-paper/status';
+import { useOnline } from '@danbro96/lupira-expo-query/online';
 import { useLocationTracking } from '../../state/location-tracking-store';
 import { usePrefs } from '../../state/prefs-store';
 import {
@@ -65,7 +69,6 @@ const LAYER_IDS: Record<LayerKey, string[]> = {
 const minuteNow = () => new Date(Math.floor(Date.now() / 60_000) * 60_000);
 
 export function MapScreen() {
-  const paper = useTheme();
   const insets = useSafeAreaInsets();
   const route = useRoute<RouteProp<RootStackParamList, 'Map'>>();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -73,6 +76,7 @@ export function MapScreen() {
   const theme: MapTheme = scheme === 'dark' ? 'dark' : 'light';
 
   useMapAuthHeader();
+  const online = useOnline();
 
   const { style, degraded } = useMapStyle(theme);
   const layerPrefs = usePrefs((p) => p.mapLayers);
@@ -291,7 +295,7 @@ export function MapScreen() {
   const mapStyle = style ?? (degraded ? fallbackStyle(theme) : undefined);
 
   return (
-    <View style={[styles.root, { backgroundColor: paper.colors.background }]}>
+    <Screen banner={<StatusBanner state={offlineBannerState(online)} />}>
       <QuickPlacesStrip places={quickPlaces} onPick={onQuickPick} />
       {degraded && (
         <Banner visible icon={ICONS.locationOff}>Basemap unavailable — showing pins on a plain background.</Banner>
@@ -344,12 +348,11 @@ export function MapScreen() {
 
       {hits && <MapPreviewSheet hits={hits} theme={theme} onAction={onHitAction} onDismiss={closePreview} />}
       {saving && <SavePlaceSheet point={saving} onDismiss={closeSave} />}
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1 },
   mapWrap: { flex: 1 },
   map: { flex: 1 },
   loading: { flex: 1, alignItems: 'center', justifyContent: 'center' },

@@ -49,7 +49,7 @@ Every layer reads REST through hand-written hooks: `useQuery(onlineQuery(key, fe
 
 - `sync/queryClient.ts` is `createAppQueryClient`: the read cache persists over `expo-sqlite/kv-store`, only the key roots the map draws (`map`, `places`, `occurrences`, `calendars`, `contacts`, `me`, `movement`), `maxAge` 7 days, `buster` = app version. `onlineQuery` = fresh 5 min, one retry for transient failures only.
 - Cached values must be JSON: `usePlaceCoords` caches the lookup list and builds its `Map` in `useMemo` (a `Map` serializes to `{}`).
-- `App.tsx` calls `connectOnlineManager()` (NetInfo internet reachability drives `onlineManager`, so reads pause on the cached data offline instead of failing) and `connectFocusManager()` (stale queries refetch on return to the foreground). Screens read the flag via `useOnline()`.
+- `App.tsx` calls `connectOnlineManager()` (NetInfo internet reachability drives `onlineManager`, so reads pause on the cached data offline instead of failing) and `connectFocusManager()` (stale queries refetch on return to the foreground). Screens read the flag via `useOnline()`; the map shows the shared `StatusBanner` over `offlineBannerState(online)` while offline, above its basemap-unavailable notice.
 - Auth is `createAuthStore` (`@danbro96/lupira-expo-oidc/authStore`, keys `lupira.maps.*`). Signing out clears the cache; a sign-in as a different account (or the first one on the install) clears it and resets location tracking before the session lands (`onAccountChange`, see below).
 
 ## Location uploader (mobile)
