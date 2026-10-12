@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { getDb } from '../data/db/expoDb';
 import type { Db } from '@danbro96/lupira-expo-sqlite/types';
-import { oldestQueuedTs, queueDepth } from '../data/locationQueue';
+import { lastUploadAt, oldestQueuedTs, queueDepth } from '../data/locationQueue';
 
 /** Live tracking counters. Lives in the sync layer because the recorder and uploader must write it
  *  without importing state/. */
@@ -33,8 +33,10 @@ export const useTrackingStatus = create<TrackingStatus & TrackingStatusActions>(
 
   refresh: async (dbOverride) => {
     const db = dbOverride ?? (await getDb());
-    const [queued, oldest] = await db.exclusive(async (tx) => [await queueDepth(tx), await oldestQueuedTs(tx)] as const);
-    set({ queued, oldestQueuedTs: oldest });
+    const [queued, oldest, uploadedAt] = await db.exclusive(
+      async (tx) => [await queueDepth(tx), await oldestQueuedTs(tx), await lastUploadAt(tx)] as const,
+    );
+    set({ queued, oldestQueuedTs: oldest, lastUploadAt: uploadedAt });
   },
 
   set: (partial) => set(partial),

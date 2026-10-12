@@ -56,5 +56,10 @@ The phone is the estate's only GPS uploader. `sync/locationRecorder.ts` records 
 - An account switch (`useLocationTracking.resetForNewAccount`) stops the recorder, disables tracking, waits out any in-flight drain, then deletes the device key and empties the queue, so no fix leaves with the previous account's key. The phone is unpaired until the new account enables tracking again; the old device stays registered server-side.
 - NDJSON lines are snake_case and must never carry principal/device ids — the server rejects the whole line.
 - Cadence adapts to speed but **accuracy stays High in every profile**: Balanced is ~100 m, above the server's 50 m cutoff, and still-mode is exactly when visits (80 m / ≥8 min) are detected — a cheap still profile silently yields zero visits.
-- Cadence changes call `startLocationUpdatesAsync` again rather than stop+start (Android 12+ forbids restarting a location FGS from the background).
+- Cadence changes call `startLocationUpdatesAsync` again rather than stop+start (Android 12+ forbids restarting a location FGS from the background). From a headless wake that call throws (no FGS start while backgrounded), so the switch only saves the profile; the next foreground applies it.
+- expo-location 57 restores task options from JSON after a process restart and drops the Integer `timeInterval` (the OS request falls back to 2 s). Until a native fix ships, JS bounds the damage:
+  - Every foreground (app start and `active`) re-issues the saved profile via `startRecording`, also when the task is live.
+  - `deferredUpdatesInterval` (read correctly after a restore) batches background wakes to about the profile interval. No `deferredUpdatesDistance`: both thresholds must hold, so a parked phone would never report and still-mode visits would vanish.
+  - `admitFix` queues a fix only when it is the profile's spacing after the last kept one (`meta location.lastKeptFixMs`, 0.8 slack for jitter); a fix moving faster than the profile keeps its own pace; a gap always admits.
+  - The recorder uploads only at ≥ 50 queued rows or 15 min after the last successful upload (`meta location.lastUploadAt`); foreground, manual and background-task drains are ungated.
 - The task is registered in `index.ts`, not from a React effect — a headless restart has no App component.

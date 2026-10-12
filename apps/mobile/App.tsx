@@ -46,14 +46,14 @@ export default function App() {
     }
     void registerBackgroundUpload();
     usePrefs.getState().init().catch((e) => logDebug('app', `prefs init failed: ${String(e)}`));
-    useLocationTracking.getState().init().catch((e) => logDebug('app', `tracking init failed: ${String(e)}`));
-
     // Tracking self-repair lives here: it may need to RESTART the location foreground service, which
     // Android only permits from the foreground.
+    const reconcileTracking = () =>
+      useLocationTracking.getState().reconcile().catch((e) => logDebug('app', `tracking reconcile failed: ${String(e)}`));
+    useLocationTracking.getState().init()
+      .then(reconcileTracking, (e) => logDebug('app', `tracking init failed: ${String(e)}`));
     const appState = AppState.addEventListener('change', (next) => {
-      if (next === 'active') {
-        useLocationTracking.getState().reconcile().catch((e) => logDebug('app', `tracking reconcile failed: ${String(e)}`));
-      }
+      if (next === 'active') void reconcileTracking();
     });
     return () => appState.remove();
   }, [loaded, authed]);

@@ -3,7 +3,7 @@ import { getDb } from '../data/db/expoDb';
 import type { Db } from '@danbro96/lupira-expo-sqlite/types';
 import { clearDeviceCredentials, loadDevice } from '../data/locationDevice';
 import {
-  deferFix, deleteFixes, deleteFixesUpTo, ensureSeqAbove, pendingFixes, pruneExpired, trimToCap,
+  deferFix, deleteFixes, deleteFixesUpTo, ensureSeqAbove, pendingFixes, pruneExpired, setLastUploadAt, trimToCap,
 } from '../data/locationQueue';
 import { loadTrackingSettings } from '../data/locationSettings';
 import type { LocationFix } from '../domain/locationFix';
@@ -74,14 +74,16 @@ async function drainOnce(dbOverride?: Db): Promise<void> {
       }
       status.set({ serverPaused: false });
 
+      const uploadedAt = new Date().toISOString();
       await db.exclusive(async (tx) => {
         await deleteFixes(tx, outcome.acked);
         for (const d of outcome.deferred) await deferFix(tx, d.seq, d.untilIso);
         // Rows the server already had but this receipt never mentioned — the "POST landed, response
         // lost to an app kill" case. Safe because the drain is single-flight and strictly seq-ordered.
         if (receipt.highWaterSeq != null) await deleteFixesUpTo(tx, receipt.highWaterSeq);
+        await setLastUploadAt(tx, uploadedAt);
       });
-      status.set({ lastUploadAt: new Date().toISOString(), lastError: null });
+      status.set({ lastUploadAt: uploadedAt, lastError: null });
       await status.refresh(db);
 
       logDebug('location', `uploaded ${receipt.inserted} (+${receipt.duplicates} dup, ${receipt.rejected} rejected)`);

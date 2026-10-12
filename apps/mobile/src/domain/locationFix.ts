@@ -86,6 +86,35 @@ export function nextCadence(
   return { activity: observed, streak: 0, restart: true };
 }
 
+/** OS delivery jitters around the requested interval; without slack every other on-time fix is dropped. */
+export const FIX_INTERVAL_SLACK = 0.8;
+
+/** A fix that already moves faster than the profile keeps its own pace, so the hysteresis window
+ *  before a cadence switch doesn't thin a trip down to Still spacing. */
+export function fixIntervalMs(profile: MotionActivity, fixActivity: MotionActivity): number {
+  const base = CADENCE[profile].timeIntervalMs;
+  return fixActivity === 'Unknown' ? base : Math.min(base, CADENCE[fixActivity].timeIntervalMs);
+}
+
+/** Queue admission by spacing. A clock that jumped backwards counts as a gap, or it would block every
+ *  fix until wall-clock caught up. */
+export function admitFix(lastKeptMs: number | null, fixMs: number, intervalMs: number): boolean {
+  if (lastKeptMs == null) return true;
+  const elapsed = fixMs - lastKeptMs;
+  return elapsed >= intervalMs * FIX_INTERVAL_SLACK || elapsed < -intervalMs;
+}
+
+export const UPLOAD_MIN_ROWS = 50;
+export const UPLOAD_MAX_AGE_MS = 15 * 60_000;
+
+/** Whether a recorded batch triggers an upload. Each upload wakes the radio, so the recorder waits for
+ *  a worthwhile batch; foreground, manual and background-task drains are not gated. */
+export function shouldUploadAfterRecord(queued: number, lastUploadMs: number | null, now: number): boolean {
+  if (queued === 0) return false;
+  if (queued >= UPLOAD_MIN_ROWS || lastUploadMs == null) return true;
+  return now - lastUploadMs >= UPLOAD_MAX_AGE_MS || now < lastUploadMs;
+}
+
 /** One NDJSON line. Field names are snake_case — the ingest parser's shape, NOT the REST DTOs' camelCase.
  *  Nulls are omitted rather than sent, and identity fields are never included: the server stamps
  *  principal/device from the DeviceKey and rejects any line that carries them (`body_ids_forbidden`). */

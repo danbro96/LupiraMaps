@@ -126,3 +126,23 @@ export async function oldestQueuedTs(tx: Tx): Promise<string | null> {
 export async function clearQueue(tx: Tx): Promise<void> {
   await tx.run('DELETE FROM location_fix_queue');
 }
+
+const LAST_KEPT_KEY = 'location.lastKeptFixMs';
+const LAST_UPLOAD_KEY = 'location.lastUploadAt';
+
+export async function lastKeptFixMs(tx: Tx): Promise<number | null> {
+  const stored = await getMeta(tx, LAST_KEPT_KEY);
+  return stored ? Number(stored) : null;
+}
+
+export async function setLastKeptFixMs(tx: Tx, ms: number): Promise<void> {
+  await setMeta(tx, LAST_KEPT_KEY, String(ms));
+}
+
+export async function lastUploadAt(tx: Tx): Promise<string | null> {
+  return getMeta(tx, LAST_UPLOAD_KEY);
+}
+
+export async function setLastUploadAt(tx: Tx, iso: string): Promise<void> {
+  await setMeta(tx, LAST_UPLOAD_KEY, iso);
+}

@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
-  CADENCE_SWITCH_AFTER, classifyActivity, isTimestampAcceptable, nextCadence,
-  receiptIsCoherent, rejectDisposition, toNdjsonLine, type LocationFix,
+  CADENCE, CADENCE_SWITCH_AFTER, UPLOAD_MAX_AGE_MS, UPLOAD_MIN_ROWS, admitFix, classifyActivity, fixIntervalMs,
+  isTimestampAcceptable, nextCadence, receiptIsCoherent, rejectDisposition, shouldUploadAfterRecord, toNdjsonLine,
+  type LocationFix,
 } from './locationFix';
 
 const NOW = Date.parse('2026-08-30T12:00:00.000Z');
@@ -70,6 +71,66 @@ describe('nextCadence', () => {
     const d = nextCadence('Walk', 'Walk', 0, 'Run');
     expect(d.restart).toBe(false);
     expect(d.streak).toBe(0);
+  });
+});
+
+describe('fixIntervalMs', () => {
+  it('uses the profile interval for a fix of the same or unknown pace', () => {
+    expect(fixIntervalMs('Still', 'Still')).toBe(CADENCE.Still.timeIntervalMs);
+    expect(fixIntervalMs('Still', 'Unknown')).toBe(CADENCE.Still.timeIntervalMs);
+  });
+
+  it('lets a faster fix keep its own pace before the cadence switches', () => {
+    expect(fixIntervalMs('Still', 'Vehicle')).toBe(CADENCE.Vehicle.timeIntervalMs);
+    expect(fixIntervalMs('Vehicle', 'Still')).toBe(CADENCE.Vehicle.timeIntervalMs);
+  });
+});
+
+describe('admitFix', () => {
+  const interval = 300_000;
+
+  it('always keeps the first fix', () => {
+    expect(admitFix(null, NOW, interval)).toBe(true);
+  });
+
+  it('drops fixes that arrive faster than the profile', () => {
+    expect(admitFix(NOW, NOW + 10_000, interval)).toBe(false);
+    expect(admitFix(NOW, NOW, interval)).toBe(false);
+  });
+
+  it('keeps an on-time fix despite delivery jitter', () => {
+    expect(admitFix(NOW, NOW + interval - 5_000, interval)).toBe(true);
+  });
+
+  it('keeps the first fix after a gap', () => {
+    expect(admitFix(NOW, NOW + 3 * 3_600_000, interval)).toBe(true);
+  });
+
+  it('treats a clock that jumped backwards as a gap', () => {
+    expect(admitFix(NOW, NOW - 2 * interval, interval)).toBe(true);
+  });
+});
+
+describe('shouldUploadAfterRecord', () => {
+  it('waits while the batch is small and the last upload recent', () => {
+    expect(shouldUploadAfterRecord(3, NOW - 60_000, NOW)).toBe(false);
+  });
+
+  it('uploads once enough rows are queued', () => {
+    expect(shouldUploadAfterRecord(UPLOAD_MIN_ROWS, NOW - 60_000, NOW)).toBe(true);
+  });
+
+  it('uploads once the last upload is old enough', () => {
+    expect(shouldUploadAfterRecord(1, NOW - UPLOAD_MAX_AGE_MS, NOW)).toBe(true);
+  });
+
+  it('uploads when nothing was ever uploaded or the clock went backwards', () => {
+    expect(shouldUploadAfterRecord(1, null, NOW)).toBe(true);
+    expect(shouldUploadAfterRecord(1, NOW + 60_000, NOW)).toBe(true);
+  });
+
+  it('never uploads an empty queue', () => {
+    expect(shouldUploadAfterRecord(0, null, NOW)).toBe(false);
   });
 });
 

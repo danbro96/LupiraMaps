@@ -4,11 +4,11 @@ import { getDb } from '../data/db/expoDb';
 import { migrate } from '@danbro96/lupira-expo-sqlite/migrate';
 import { MIGRATIONS } from '../data/db/schema';
 import { getMeta, setMeta } from '../data/db/meta';
-import { enqueueFix } from '../data/locationQueue';
+import { enqueueFix, lastKeptFixMs, lastUploadAt, queueDepth, setLastKeptFixMs } from '../data/locationQueue';
 import { readTrackingSettings } from '../data/locationSettings';
 import {
-  CADENCE, MAX_USEFUL_ACCURACY_M, classifyActivity, isTimestampAcceptable, nextCadence,
-  type MotionActivity,
+  CADENCE, FIX_INTERVAL_SLACK, MAX_USEFUL_ACCURACY_M, admitFix, classifyActivity, fixIntervalMs,
+  isTimestampAcceptable, nextCadence, shouldUploadAfterRecord, type MotionActivity,
 } from '../domain/locationFix';
 import { batteryPct } from '../data/battery';
 import { logDebug } from '@danbro96/lupira-expo-diagnostics/log';
@@ -64,11 +64,13 @@ async function recordFixes(locations: Location.LocationObject[]): Promise<void> 
   // Read once per batch, not per fix — the server only surfaces it on /location/current anyway.
   const battery = await batteryPct();
   let observed: MotionActivity = 'Unknown';
+  const { activity: profile } = await loadCadence();
 
   const recorded = await db.exclusive(async (tx) => {
     // Checked inside the write so an account reset that disables tracking can't be overtaken by this insert.
     const settings = await readTrackingSettings(tx);
-    if (!settings.enabled || settings.paused) return false;
+    if (!settings.enabled || settings.paused) return null;
+    let lastKept = await lastKeptFixMs(tx);
     for (const location of locations) {
       const ts = new Date(location.timestamp).toISOString();
       // A fix the server would reject outright is never worth queue space.
@@ -80,6 +82,8 @@ async function recordFixes(locations: Location.LocationObject[]): Promise<void> 
 
       const activity = classifyActivity(location.coords.speed);
       observed = activity;
+      if (!admitFix(lastKept, location.timestamp, fixIntervalMs(profile, activity))) continue;
+      lastKept = location.timestamp;
       await enqueueFix(tx, {
         ts,
         lat: location.coords.latitude,
@@ -95,13 +99,15 @@ async function recordFixes(locations: Location.LocationObject[]): Promise<void> 
         isMock: location.mocked === true,
       });
     }
-    return true;
+    if (lastKept != null) await setLastKeptFixMs(tx, lastKept);
+    const uploadedAt = await lastUploadAt(tx);
+    return { queued: await queueDepth(tx), lastUploadMs: uploadedAt ? Date.parse(uploadedAt) : null };
   });
   if (!recorded) return;
 
   await useTrackingStatus.getState().refresh(db);
   await applyCadence(observed);
-  void runLocationUpload(db);
+  if (shouldUploadAfterRecord(recorded.queued, recorded.lastUploadMs, Date.now())) void runLocationUpload(db);
 }
 
 /** Restarts OS updates when the activity class has genuinely changed. */
@@ -114,11 +120,12 @@ async function applyCadence(observed: MotionActivity): Promise<void> {
     // Deliberately NOT stop-then-start: calling start again on a live task reconfigures the location
     // request in place and leaves the foreground service up. Stopping first would mean re-starting a
     // location FGS from the background, which Android 12+ forbids outright.
+    // Fails whenever the app is backgrounded (no FGS start allowed); the saved profile is re-applied on
+    // the next foreground and already gates the queue meanwhile.
     try {
       await startUpdates(decision.activity);
     } catch (e) {
-      logDebug('location', `cadence change failed: ${String(e)}`);
-      return;
+      logDebug('location', `cadence change deferred to foreground: ${String(e)}`);
     }
   }
   await saveCadence({ activity: decision.activity, streakActivity: observed, streak: decision.streak });
@@ -132,6 +139,8 @@ async function startUpdates(activity: MotionActivity): Promise<void> {
     accuracy: Location.Accuracy.High,
     timeInterval: profile.timeIntervalMs,
     distanceInterval: profile.distanceIntervalM,
+    // Read as a Number even from options restored after a process restart, unlike timeInterval.
+    deferredUpdatesInterval: Math.round(profile.timeIntervalMs * FIX_INTERVAL_SLACK),
     pausesUpdatesAutomatically: false,
     foregroundService: {
       notificationTitle: 'Lupira is recording your route',
@@ -148,11 +157,13 @@ export async function isRecording(): Promise<boolean> {
 /** Arms tracking. MUST be called from the foreground: Android refuses to start a foreground service
  *  for a backgrounded app. Assumes permissions are already granted (see the tracking store). */
 export async function startRecording(): Promise<void> {
-  if (await isRecording()) return;
+  const wasRecording = await isRecording();
   const state = await loadCadence();
+  // Re-issued even when live: after a headless restart expo-location restores the options from JSON and
+  // drops the Integer timeInterval, so the OS request silently runs at its 2 s default.
   await startUpdates(state.activity);
   useTrackingStatus.getState().set({ recording: true });
-  logDebug('location', 'recording started');
+  logDebug('location', wasRecording ? `cadence ${state.activity} re-applied` : 'recording started');
 }
 
 export async function stopRecording(): Promise<void> {

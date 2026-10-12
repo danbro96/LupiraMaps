@@ -147,7 +147,7 @@ export const useLocationTracking = create<TrackingState & TrackingActions>((set,
       await stopRecording();
       return;
     }
-    if (!running) await startRecording();
+    await startRecording();
     void runLocationUpload();
   },
 
