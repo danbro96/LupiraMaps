@@ -4,6 +4,9 @@ import BottomNavigationAction from '@mui/material/BottomNavigationAction';
 import Paper from '@mui/material/Paper';
 import { MapIcon, PlaceIcon } from '@danbro96/lupira-web-mui/icons';
 
+/** MUI BottomNavigation's fixed height. */
+export const BOTTOM_NAV_HEIGHT = 56;
+
 const TABS = [
   { to: '/', end: true, icon: <MapIcon />, label: 'Map' },
   { to: '/places', icon: <PlaceIcon />, label: 'Places' },

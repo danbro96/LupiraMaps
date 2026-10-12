@@ -46,7 +46,10 @@ export function MapCanvas({ children, center, zoom }: { children?: ReactNode; ce
         zoom: initialView.current.zoom,
         attributionControl: { compact: true },
       });
-      created.addControl(new NavigationControl({ showCompass: false }), 'top-right');
+      // Touch screens pinch to zoom, and on a phone the buttons would sit under the search row.
+      if (!window.matchMedia('(pointer: coarse)').matches) {
+        created.addControl(new NavigationControl({ showCompass: false }), 'top-right');
+      }
       created.addControl(new ScaleControl(), 'bottom-left');
       // The lazy route can mount mid-layout: a 0-width container at construction leaves MapLibre's
       // 400px fallback buffer behind, and its own observer misses the catch-up. One explicit resize heals it.

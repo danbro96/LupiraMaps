@@ -4,7 +4,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
+import CircularProgress from '@mui/material/CircularProgress';
+import Drawer from '@mui/material/Drawer';
 import Typography from '@mui/material/Typography';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import type { Bbox, MapViewport } from '@danbro96/lupira-domain-places/geo';
@@ -52,7 +55,7 @@ import {
   SavedPlacesLayer,
 } from '../components/map/layers';
 import { FitToData, FlyToPlace, ViewportReporter } from '../components/map/mapEffects';
-import { EventIcon, FamilyIcon, HomeIcon, WorkIcon } from '@danbro96/lupira-web-mui/icons';
+import { EventIcon, FamilyIcon, FilterIcon, HomeIcon, WorkIcon } from '@danbro96/lupira-web-mui/icons';
 
 const QUICK_PLACE_ICONS = { home: HomeIcon, work: WorkIcon, parents: FamilyIcon, event: EventIcon } as const;
 
@@ -72,6 +75,8 @@ type FlyTarget = { center: [number, number]; zoom?: number; spanM?: number; boun
 export default function MapScreen() {
   const [params, setParams] = useSearchParams();
   const theme = useMapTheme();
+  const compact = useMediaQuery(useTheme().breakpoints.down('sm'));
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const selectedPlaceId = params.get('place') ?? undefined;
 
   const setParam = (key: string, value: string | undefined) =>
@@ -220,6 +225,8 @@ export default function MapScreen() {
       const [lon, lat] = (feature.geometry as GeoJSON.Point).coordinates;
       setFlyTarget({ center: [lon, lat] });
       if (typeof placeId === 'string' && placeId) select('place', placeId);
+      // Both panels are bottom sheets on a phone; the place sheet replaces the index rather than stacking on it.
+      if (compact && typeof placeId === 'string' && placeId) setParam('index', undefined);
     };
 
     // Contacts grouped per (deduped) address kind — mixed-kind households land under the joined kind.
@@ -286,6 +293,20 @@ export default function MapScreen() {
     ];
   })();
 
+  const filters = (
+    <>
+      <TimeRangeBar range={range} onChange={setRange} />
+      <LayerToggles
+        active={activeLayers}
+        onToggle={toggleLayer}
+        theme={theme}
+        unmappableCount={events.unmappableCount}
+        showHistory={showHistory}
+        onToggleHistory={() => setParam('history', showHistory ? undefined : '1')}
+      />
+    </>
+  );
+
   return (
     <Box sx={{ flex: 1, minHeight: 0, position: 'relative', display: 'flex' }}>
       <MapCanvas>
@@ -327,25 +348,42 @@ export default function MapScreen() {
         }}
       >
         <MapSearch onPick={onSearchPick} />
-        <TimeRangeBar range={range} onChange={setRange} />
-        <LayerToggles
-          active={activeLayers}
-          onToggle={toggleLayer}
-          theme={theme}
-          unmappableCount={events.unmappableCount}
-          showHistory={showHistory}
-          onToggleHistory={() => setParam('history', showHistory ? undefined : '1')}
-        />
+        {compact ? (
+          <Chip
+            onClick={() => setFiltersOpen(true)}
+            icon={anyLoading ? <CircularProgress size={16} aria-label="Loading" /> : <FilterIcon />}
+            label="Filters"
+            sx={{ bgcolor: 'background.paper', boxShadow: 1 }}
+          />
+        ) : filters}
         <Chip
           variant={showIndex ? 'filled' : 'outlined'}
           color={showIndex ? 'primary' : 'default'}
           onClick={() => setParam('index', showIndex ? undefined : '1')}
           icon={<ViewListIcon />}
           label="List"
+          sx={showIndex ? undefined : { bgcolor: 'background.paper' }}
         />
-        {anyLoading && <Typography variant="caption" sx={{ color: 'text.secondary' }}>Loading…</Typography>}
+        {anyLoading && !compact && <Typography variant="caption" sx={{ color: 'text.secondary' }}>Loading…</Typography>}
         <QuickPlacesBar places={quickPlaces} onPick={onQuickPick} />
       </Box>
+
+      {compact && (
+        <Drawer anchor="bottom" open={filtersOpen} onClose={() => setFiltersOpen(false)}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 1.5,
+              p: 2,
+              pb: 'calc(16px + env(safe-area-inset-bottom))',
+              '& .MuiPaper-root': { boxShadow: 'none', p: 0 },
+            }}
+          >
+            {filters}
+          </Box>
+        </Drawer>
+      )}
 
       {showIndex && <MapIndexPanel groups={indexGroups} onClose={() => setParam('index', undefined)} />}
 

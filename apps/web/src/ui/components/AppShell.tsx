@@ -4,7 +4,7 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import Toolbar from '@mui/material/Toolbar';
-import { BottomNav } from './BottomNav';
+import { BOTTOM_NAV_HEIGHT, BottomNav } from './BottomNav';
 import { EventCard } from './EventCard';
 
 const NAV = [
@@ -52,7 +52,19 @@ export function AppShell() {
             </Stack>
           </Toolbar>
         </AppBar>
-        <Box component="main" sx={{ flex: 1, minHeight: 0, minWidth: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+        <Box
+          component="main"
+          sx={{
+            flex: 1,
+            minHeight: 0,
+            minWidth: 0,
+            overflowY: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+            // BottomNav is fixed over the page below md; this keeps the map and lists clear of it.
+            pb: { xs: `calc(${BOTTOM_NAV_HEIGHT}px + env(safe-area-inset-bottom))`, md: 0 },
+          }}
+        >
           <Outlet />
         </Box>
         <BottomNav />

@@ -1,15 +1,24 @@
+import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
+import MenuItem from '@mui/material/MenuItem';
+import Stack from '@mui/material/Stack';
+import Switch from '@mui/material/Switch';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
-import type { CalendarItemDto } from '@lupira/maps-api/models';
+import { PlaceCategory, type PlaceDto, type SavedPlaceDto } from '@lupira/maps-api/models';
+import { placeCategoryLabel } from '@lupira/maps-domain/placeCuration';
+import { placeItemWhen, placeRole } from '@lupira/maps-domain/placeItems';
 import { addressMeta, residentsByPlace } from '@danbro96/lupira-domain-contacts/residents';
 import { formatCoords, osmUrl } from '@danbro96/lupira-domain-places/places';
-import { fmtDate, fmtDateTime, parseYmd } from '@danbro96/lupira-domain-core/time';
+import { useSnackbar } from '@danbro96/lupira-web-mui/SnackbarHost';
 import { links } from '../../../config/siblings';
-import { useGeoPlace, usePlaceItems } from '../../../state/usePlaces';
+import { useGeoPlace, usePlaceEdits, usePlaceItems, useSavedPlaceFor } from '../../../state/usePlaces';
 import { useResidencyRows } from '../../../state/useResidencies';
+import { errText } from '../../errText';
 import { EntryCodes } from '../places/EntryCodes';
 import { CategoryIcon } from '../CategoryIcon';
 import { DrawerSection } from '../DrawerSection';
@@ -18,9 +27,9 @@ import Box from '@mui/material/Box';
 import CloseIcon from '@mui/icons-material/Close';
 import { displayTitle } from '@danbro96/lupira-domain-events/itemLabels';
 import { Row, RowName } from '../Rows';
-import { PlaceIcon } from '@danbro96/lupira-web-mui/icons';
+import { EditIcon, PlaceIcon } from '@danbro96/lupira-web-mui/icons';
 
-/** The ?place= detail pane: containment, items, contacts. */
+/** The ?place= detail pane: the place (editable), your saved label for it, containment, items, contacts. */
 export function PlaceDetailPanel({ placeId, onClose }: { placeId: string; onClose: () => void }) {
   const { data: place, isLoading } = useGeoPlace(placeId);
 
@@ -32,13 +41,13 @@ export function PlaceDetailPanel({ placeId, onClose }: { placeId: string; onClos
         position: 'absolute',
         zIndex: 6,
         top: { xs: 'auto', sm: 1.5 },
-        right: 1.5,
-        left: { xs: 1.5, sm: 'auto' },
-        bottom: { xs: 'calc(64px + 12px)', sm: 1.5 },
-        maxHeight: { xs: '45vh', sm: 'none' },
+        right: { xs: 0, sm: 1.5 },
+        left: { xs: 0, sm: 'auto' },
+        bottom: { xs: 0, sm: 1.5 },
+        maxHeight: { xs: '60%', sm: 'none' },
         width: { xs: 'auto', sm: 'min(360px, calc(100vw - 24px))' },
         overflowY: 'auto',
-        borderRadius: '12px',
+        borderRadius: { xs: '12px 12px 0 0', sm: '12px' },
         p: 1.5,
       }}
     >
@@ -50,10 +59,7 @@ export function PlaceDetailPanel({ placeId, onClose }: { placeId: string; onClos
       {place && (
         <>
           <Paper variant="outlined" component="section" sx={{ p: '12px 16px', my: 1.5 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <h3 style={{ margin: 0, flex: 1 }}>{place.name}</h3>
-              <Chip variant="outlined" label={place.category} />
-            </Box>
+            <PlaceHeading place={place} />
             {(place.containment ?? []).length > 0 && (
               <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 0.5, fontSize: 13 }}>
                 {(place.containment ?? []).map((a, i) => (
@@ -84,11 +90,134 @@ export function PlaceDetailPanel({ placeId, onClose }: { placeId: string; onClos
               </Typography>
             )}
           </Paper>
+          <SavedPanel place={place} />
           <ItemsPanel placeId={placeId} />
           <ContactsPanel placeId={placeId} />
         </>
       )}
     </Paper>
+  );
+}
+
+const CATEGORIES = Object.values(PlaceCategory);
+
+function useEdits() {
+  const showSnack = useSnackbar();
+  return usePlaceEdits((e) => showSnack(errText(e) ?? 'Request failed.'));
+}
+
+/** Name and category, editable in place (PATCH the gazetteer place). */
+function PlaceHeading({ place }: { place: PlaceDto }) {
+  const { updatePlace } = useEdits();
+  const [draft, setDraft] = useState<{ name: string; category: PlaceCategory } | null>(null);
+
+  if (!draft) {
+    return (
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <h3 style={{ margin: 0, flex: 1 }}>{place.name}</h3>
+        <Chip variant="outlined" label={placeCategoryLabel(place.category)} />
+        <IconButton aria-label="Edit place" size="small" onClick={() => setDraft({ name: place.name, category: place.category })}>
+          <EditIcon fontSize="small" />
+        </IconButton>
+      </Box>
+    );
+  }
+  const save = () => updatePlace.mutate(
+    { id: place.id, data: { name: draft.name.trim(), category: draft.category } },
+    { onSuccess: () => setDraft(null) },
+  );
+  return (
+    <Stack spacing={1.5} sx={{ mb: 1 }}>
+      <TextField size="small" label="Name" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
+      <TextField
+        select
+        size="small"
+        label="Category"
+        value={draft.category}
+        onChange={(e) => setDraft({ ...draft, category: e.target.value as PlaceCategory })}
+      >
+        {CATEGORIES.map((c) => <MenuItem key={c} value={c}>{placeCategoryLabel(c)}</MenuItem>)}
+      </TextField>
+      <Stack direction="row" spacing={1}>
+        <Button variant="contained" disabled={!draft.name.trim() || updatePlace.isPending} onClick={save}>Save</Button>
+        <Button onClick={() => setDraft(null)}>Cancel</Button>
+      </Stack>
+    </Stack>
+  );
+}
+
+/** Your own label for the place: name, notes, favorite; or a way to save it. */
+function SavedPanel({ place }: { place: PlaceDto }) {
+  const { saved, isLoading } = useSavedPlaceFor(place.id);
+  const { createSaved } = useEdits();
+  if (isLoading) return null;
+  return (
+    <DrawerSection title="Saved place">
+      {saved ? (
+        <SavedPlaceFields saved={saved} />
+      ) : (
+        <Button
+          variant="outlined"
+          disabled={createSaved.isPending}
+          onClick={() => createSaved.mutate({ data: { label: place.name, placeId: place.id } })}
+        >
+          Save place
+        </Button>
+      )}
+    </DrawerSection>
+  );
+}
+
+function SavedPlaceFields({ saved }: { saved: SavedPlaceDto }) {
+  const { updateSaved, deleteSaved } = useEdits();
+  const [draft, setDraft] = useState<{ label: string; notes: string } | null>(null);
+
+  if (draft) {
+    const save = () => updateSaved.mutate(
+      { id: saved.id, data: { label: draft.label.trim(), notes: draft.notes.trim() || null } },
+      { onSuccess: () => setDraft(null) },
+    );
+    return (
+      <Stack spacing={1.5}>
+        <TextField size="small" label="Name" value={draft.label} onChange={(e) => setDraft({ ...draft, label: e.target.value })} />
+        <TextField
+          size="small"
+          label="Notes"
+          multiline
+          minRows={2}
+          value={draft.notes}
+          onChange={(e) => setDraft({ ...draft, notes: e.target.value })}
+        />
+        <Stack direction="row" spacing={1}>
+          <Button variant="contained" disabled={!draft.label.trim() || updateSaved.isPending} onClick={save}>Save</Button>
+          <Button onClick={() => setDraft(null)}>Cancel</Button>
+        </Stack>
+      </Stack>
+    );
+  }
+  return (
+    <Stack spacing={0.5}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Typography sx={{ flex: 1, fontWeight: 600 }}>{saved.label}</Typography>
+        <IconButton aria-label="Edit saved place" size="small" onClick={() => setDraft({ label: saved.label, notes: saved.notes ?? '' })}>
+          <EditIcon fontSize="small" />
+        </IconButton>
+      </Box>
+      {saved.notes && <Typography variant="body2" sx={{ color: 'text.secondary', whiteSpace: 'pre-wrap' }}>{saved.notes}</Typography>}
+      <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+        <FormControlLabel
+          sx={{ flex: 1 }}
+          label="Favorite"
+          control={(
+            <Switch
+              checked={saved.isFavorite}
+              onChange={(e) => updateSaved.mutate({ id: saved.id, data: { isFavorite: e.target.checked } })}
+            />
+          )}
+        />
+        <Button color="error" disabled={deleteSaved.isPending} onClick={() => deleteSaved.mutate({ id: saved.id })}>Remove</Button>
+      </Stack>
+    </Stack>
   );
 }
 
@@ -112,8 +241,8 @@ function ItemsPanel({ placeId }: { placeId: string }) {
             <CategoryIcon category={item.category} sx={{ fontSize: 22 }} />
           )}
           <RowName>{displayTitle(item.title)}</RowName>
-          <Typography variant="caption" sx={{ color: 'text.secondary' }}>{whenOf(item)}</Typography>
-          {roleOf(item, placeId) && <Chip variant="outlined" label={roleOf(item, placeId)} />}
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>{placeItemWhen(item)}</Typography>
+          {placeRole(item, placeId) && <Chip variant="outlined" label={placeRole(item, placeId)} />}
         </Row>
       ))}
     </DrawerSection>
@@ -135,18 +264,4 @@ function ContactsPanel({ placeId }: { placeId: string }) {
       ))}
     </DrawerSection>
   );
-}
-
-/** Which role the place plays for an item: its location, or a travel endpoint. */
-function roleOf(item: CalendarItemDto, placeId: string): string {
-  if (item.placeId === placeId) return 'At';
-  const t = item.details?.travel;
-  if (t?.toPlaceId === placeId) return 'To';
-  if (t?.fromPlaceId === placeId) return 'From';
-  return '';
-}
-
-function whenOf(item: CalendarItemDto): string {
-  if (item.isAllDay) return item.startDate ? fmtDate(parseYmd(item.startDate)) : '';
-  return item.startsAt ? fmtDateTime(new Date(item.startsAt)) : '';
 }

@@ -1,6 +1,11 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useGetItemsByPlace } from '@lupira/maps-api/query/cal';
-import { createPlace, getGetPlaceQueryKey, useGetPlace } from '@lupira/maps-api/query/geo';
+import {
+  createPlace, getGetPlaceQueryKey, useCreateSavedPlace, useDeleteSavedPlace, useGetPlace, useListSavedPlaces, useUpdatePlace,
+  useUpdateSavedPlace,
+} from '@lupira/maps-api/query/geo';
+import { findSavedPlace } from '@lupira/maps-domain/savedPlaces';
+import { useInvalidatePlaces } from './useInvalidate';
 
 /** A single gazetteer place with its containment chain (outermost→innermost). */
 export function useGeoPlace(placeId: string | undefined) {
@@ -20,4 +25,22 @@ export function useCreatePlaceAtPin() {
       createPlace({ name, latitude: lat, longitude: lon }),
     onSuccess: (place) => queryClient.setQueryData(getGetPlaceQueryKey(place.id), place),
   });
+}
+
+/** The saved place labelling a gazetteer place, if any. */
+export function useSavedPlaceFor(placeId: string) {
+  const q = useListSavedPlaces();
+  return { saved: findSavedPlace(q.data ?? [], { placeId }), isLoading: q.isLoading };
+}
+
+/** Place and saved-place writes; each refreshes every geo place query. `onError` gets the failure. */
+export function usePlaceEdits(onError: (e: unknown) => void) {
+  const invalidate = useInvalidatePlaces();
+  const mutation = { onSuccess: () => invalidate(), onError };
+  return {
+    updatePlace: useUpdatePlace({ mutation }),
+    createSaved: useCreateSavedPlace({ mutation }),
+    updateSaved: useUpdateSavedPlace({ mutation }),
+    deleteSaved: useDeleteSavedPlace({ mutation }),
+  };
 }

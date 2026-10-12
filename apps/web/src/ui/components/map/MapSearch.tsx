@@ -58,7 +58,7 @@ export function MapSearch({ onPick }: { onPick: (target: SearchTarget) => void }
         : [];
 
   return (
-    <Box sx={{ position: 'relative', minWidth: 220 }}>
+    <Box sx={{ position: 'relative', flex: { xs: 1, sm: 'none' }, minWidth: { xs: 0, sm: 220 } }}>
       <Autocomplete<SearchOption, false, false, true>
         freeSolo
         options={options}

@@ -5,6 +5,9 @@ import { placeSpanM, zoomForSpan } from '@danbro96/lupira-domain-maps/mapZoom';
 import { useGeoPlace } from '../../../state/usePlaces';
 import { useMap } from './MapCanvas';
 
+/** MUI's `sm` breakpoint. */
+const PHONE_MAX_WIDTH_PX = 600;
+
 /** Fly to the selected gazetteer place whenever ?place= changes, framed by the kind of place, and say where
  *  it is so the screen can pin it. */
 export function FlyToPlace({ placeId, onLocated }: { placeId: string | undefined; onLocated: (point: [number, number]) => void }) {
@@ -16,8 +19,11 @@ export function FlyToPlace({ placeId, onLocated }: { placeId: string | undefined
     if (!placeId) { flownTo.current = undefined; return; }
     if (!place || place.latitude == null || place.longitude == null || flownTo.current === placeId) return;
     flownTo.current = placeId;
-    const zoom = zoomForSpan(placeSpanM(place), map.getContainer().clientWidth, place.latitude);
-    map.flyTo({ center: [place.longitude, place.latitude], zoom });
+    const { clientWidth, clientHeight } = map.getContainer();
+    const zoom = zoomForSpan(placeSpanM(place), clientWidth, place.latitude);
+    // Below sm the place panel is a bottom sheet up to 60% tall: centre the place in the map left above it.
+    const offset: [number, number] = clientWidth < PHONE_MAX_WIDTH_PX ? [0, -clientHeight * 0.3] : [0, 0];
+    map.flyTo({ center: [place.longitude, place.latitude], zoom, offset });
     onLocated([place.longitude, place.latitude]);
   }, [map, placeId, place, onLocated]);
   return null;
