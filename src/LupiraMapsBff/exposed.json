@@ -28,15 +28,19 @@
       "PUT /places/{placeId}/entry-codes/{codeId}"
     ],
     "geo-api": [
+      "DELETE /me/places/{id}",
       "GET /curation/orphans",
       "GET /geocode/forward",
+      "GET /geocode/reverse",
       "GET /me/places",
       "GET /places",
       "GET /places/suggest",
       "GET /places/{id}",
       "GET /places/{id}/history",
+      "PATCH /me/places/{id}",
       "PATCH /places/{id}",
       "POST /curation/prune",
+      "POST /me/places",
       "POST /places",
       "POST /places/lookup",
       "POST /places/{id}/regeocode"

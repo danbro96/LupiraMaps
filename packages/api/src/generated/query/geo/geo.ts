@@ -25,6 +25,7 @@ import type {
 
 import type {
   CreatePlaceRequest,
+  CreateSavedPlaceRequest,
   CurationEventDto,
   ForwardGeocodeParams,
   GeocodeResultDto,
@@ -37,10 +38,12 @@ import type {
   PrunePlaceResultDto,
   PrunePlacesRequest,
   RegeocodePlaceParams,
+  ReverseGeocodeParams,
   SavedPlaceDto,
   SearchPlacesParams,
   SuggestPlacesParams,
-  UpdatePlaceRequest
+  UpdatePlaceRequest,
+  UpdateSavedPlaceRequest
 } from '../../models';
 
 import { apiRequest } from '../../../transport';
@@ -1022,7 +1025,114 @@ export const usePrunePlaces = <TError = ProblemDetails,
       > => {
       return useMutation(getPrunePlacesMutationOptions(options), queryClient);
     }
-    export const getForwardGeocodeUrl = (params: ForwardGeocodeParams,) => {
+    export const getReverseGeocodeUrl = (params: ReverseGeocodeParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/geo-api/geocode/reverse?${stringifiedParams}` : `/geo-api/geocode/reverse`
+}
+
+/**
+ * @summary Coordinate → coarse label + structured address (cached; coordinates quantized to a ~100 m grid).
+ */
+export const reverseGeocode = async (params: ReverseGeocodeParams, options?: Parameters<typeof apiRequest>[1]): Promise<GeocodeResultDto> => {
+
+  return apiRequest<GeocodeResultDto>(getReverseGeocodeUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getReverseGeocodeQueryKey = (params?: ReverseGeocodeParams,) => {
+    return [
+    `/geo-api/geocode/reverse`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getReverseGeocodeQueryOptions = <TData = Awaited<ReturnType<typeof reverseGeocode>>, TError = ProblemDetails>(params: ReverseGeocodeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof reverseGeocode>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getReverseGeocodeQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof reverseGeocode>>> = ({ signal }) => reverseGeocode(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof reverseGeocode>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ReverseGeocodeQueryResult = NonNullable<Awaited<ReturnType<typeof reverseGeocode>>>
+export type ReverseGeocodeQueryError = ProblemDetails
+
+
+export function useReverseGeocode<TData = Awaited<ReturnType<typeof reverseGeocode>>, TError = ProblemDetails>(
+ params: ReverseGeocodeParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof reverseGeocode>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof reverseGeocode>>,
+          TError,
+          Awaited<ReturnType<typeof reverseGeocode>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useReverseGeocode<TData = Awaited<ReturnType<typeof reverseGeocode>>, TError = ProblemDetails>(
+ params: ReverseGeocodeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof reverseGeocode>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof reverseGeocode>>,
+          TError,
+          Awaited<ReturnType<typeof reverseGeocode>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useReverseGeocode<TData = Awaited<ReturnType<typeof reverseGeocode>>, TError = ProblemDetails>(
+ params: ReverseGeocodeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof reverseGeocode>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Coordinate → coarse label + structured address (cached; coordinates quantized to a ~100 m grid).
+ */
+
+export function useReverseGeocode<TData = Awaited<ReturnType<typeof reverseGeocode>>, TError = ProblemDetails>(
+ params: ReverseGeocodeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof reverseGeocode>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getReverseGeocodeQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export const getForwardGeocodeUrl = (params: ForwardGeocodeParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -1229,3 +1339,251 @@ export function useListSavedPlaces<TData = Awaited<ReturnType<typeof listSavedPl
 
 
 
+export const getCreateSavedPlaceUrl = () => {
+
+
+
+
+  return `/geo-api/me/places`
+}
+
+/**
+ * @summary Save a place with a personal label (references a gazetteer place, or a raw coordinate).
+ */
+export const createSavedPlace = async (createSavedPlaceRequest: CreateSavedPlaceRequest, options?: Parameters<typeof apiRequest>[1]): Promise<SavedPlaceDto> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return apiRequest<SavedPlaceDto>(getCreateSavedPlaceUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(createSavedPlaceRequest)
+  }
+);}
+
+
+
+
+
+export const getCreateSavedPlaceMutationKey = () => ['createSavedPlace'] as const;
+
+export const getCreateSavedPlaceMutationOptions = <TError = ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSavedPlace>>, TError,CreateSavedPlaceMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+): UseMutationOptions<Awaited<ReturnType<typeof createSavedPlace>>, TError,CreateSavedPlaceMutationVariables, TContext> => {
+
+const mutationKey = getCreateSavedPlaceMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createSavedPlace>>, CreateSavedPlaceMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  createSavedPlace(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateSavedPlaceMutationResult = NonNullable<Awaited<ReturnType<typeof createSavedPlace>>>
+    export type CreateSavedPlaceMutationBody = CreateSavedPlaceRequest
+    export type CreateSavedPlaceMutationError = ProblemDetails
+    export type CreateSavedPlaceMutationVariables = {data: CreateSavedPlaceRequest}
+
+    /**
+ * @summary Save a place with a personal label (references a gazetteer place, or a raw coordinate).
+ */
+export const useCreateSavedPlace = <TError = ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSavedPlace>>, TError,CreateSavedPlaceMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createSavedPlace>>,
+        TError,
+        CreateSavedPlaceMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCreateSavedPlaceMutationOptions(options), queryClient);
+    }
+    export const getUpdateSavedPlaceUrl = (id: string,) => {
+
+
+
+
+  return `/geo-api/me/places/${id}`
+}
+
+/**
+ * @summary Rename, annotate, or (un)favorite a saved place.
+ */
+export const updateSavedPlace = async (id: string,
+    updateSavedPlaceRequest: UpdateSavedPlaceRequest, options?: Parameters<typeof apiRequest>[1]): Promise<SavedPlaceDto> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return apiRequest<SavedPlaceDto>(getUpdateSavedPlaceUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(updateSavedPlaceRequest)
+  }
+);}
+
+
+
+
+
+export const getUpdateSavedPlaceMutationKey = () => ['updateSavedPlace'] as const;
+
+export const getUpdateSavedPlaceMutationOptions = <TError = ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSavedPlace>>, TError,UpdateSavedPlaceMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateSavedPlace>>, TError,UpdateSavedPlaceMutationVariables, TContext> => {
+
+const mutationKey = getUpdateSavedPlaceMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateSavedPlace>>, UpdateSavedPlaceMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateSavedPlace(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateSavedPlaceMutationResult = NonNullable<Awaited<ReturnType<typeof updateSavedPlace>>>
+    export type UpdateSavedPlaceMutationBody = UpdateSavedPlaceRequest
+    export type UpdateSavedPlaceMutationError = ProblemDetails
+    export type UpdateSavedPlaceMutationVariables = {id: string;data: UpdateSavedPlaceRequest}
+
+    /**
+ * @summary Rename, annotate, or (un)favorite a saved place.
+ */
+export const useUpdateSavedPlace = <TError = ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSavedPlace>>, TError,UpdateSavedPlaceMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateSavedPlace>>,
+        TError,
+        UpdateSavedPlaceMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUpdateSavedPlaceMutationOptions(options), queryClient);
+    }
+    export const getDeleteSavedPlaceUrl = (id: string,) => {
+
+
+
+
+  return `/geo-api/me/places/${id}`
+}
+
+/**
+ * @summary Remove a saved place.
+ */
+export const deleteSavedPlace = async (id: string, options?: Parameters<typeof apiRequest>[1]): Promise<void> => {
+
+  return apiRequest<void>(getDeleteSavedPlaceUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteSavedPlaceMutationKey = () => ['deleteSavedPlace'] as const;
+
+export const getDeleteSavedPlaceMutationOptions = <TError = ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteSavedPlace>>, TError,DeleteSavedPlaceMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteSavedPlace>>, TError,DeleteSavedPlaceMutationVariables, TContext> => {
+
+const mutationKey = getDeleteSavedPlaceMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteSavedPlace>>, DeleteSavedPlaceMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteSavedPlace(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteSavedPlaceMutationResult = NonNullable<Awaited<ReturnType<typeof deleteSavedPlace>>>
+
+    export type DeleteSavedPlaceMutationError = ProblemDetails
+    export type DeleteSavedPlaceMutationVariables = {id: string}
+
+    /**
+ * @summary Remove a saved place.
+ */
+export const useDeleteSavedPlace = <TError = ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteSavedPlace>>, TError,DeleteSavedPlaceMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteSavedPlace>>,
+        TError,
+        DeleteSavedPlaceMutationVariables,
+        TContext
+      > => {
+      return useMutation(getDeleteSavedPlaceMutationOptions(options), queryClient);
+    }

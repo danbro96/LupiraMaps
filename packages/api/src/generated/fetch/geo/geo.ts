@@ -6,6 +6,7 @@
  */
 import type {
   CreatePlaceRequest,
+  CreateSavedPlaceRequest,
   CurationEventDto,
   ForwardGeocodeParams,
   GeocodeResultDto,
@@ -17,10 +18,12 @@ import type {
   PrunePlaceResultDto,
   PrunePlacesRequest,
   RegeocodePlaceParams,
+  ReverseGeocodeParams,
   SavedPlaceDto,
   SearchPlacesParams,
   SuggestPlacesParams,
-  UpdatePlaceRequest
+  UpdatePlaceRequest,
+  UpdateSavedPlaceRequest
 } from '../../models';
 
 import { apiRequest } from '../../../transport';
@@ -343,6 +346,36 @@ return apiRequest<PrunePlaceResultDto[]>(getPrunePlacesUrl(),
 );}
 
 
+export const getReverseGeocodeUrl = (params: ReverseGeocodeParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/geo-api/geocode/reverse?${stringifiedParams}` : `/geo-api/geocode/reverse`
+}
+
+/**
+ * @summary Coordinate → coarse label + structured address (cached; coordinates quantized to a ~100 m grid).
+ */
+export const reverseGeocode = async (params: ReverseGeocodeParams, options?: Parameters<typeof apiRequest>[1]): Promise<GeocodeResultDto> => {
+
+  return apiRequest<GeocodeResultDto>(getReverseGeocodeUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
 export const getForwardGeocodeUrl = (params: ForwardGeocodeParams,) => {
   const normalizedParams = new URLSearchParams();
 
@@ -390,6 +423,104 @@ export const listSavedPlaces = async ( options?: Parameters<typeof apiRequest>[1
   {
     ...options,
     method: 'GET'
+
+
+  }
+);}
+
+
+export const getCreateSavedPlaceUrl = () => {
+
+
+
+
+  return `/geo-api/me/places`
+}
+
+/**
+ * @summary Save a place with a personal label (references a gazetteer place, or a raw coordinate).
+ */
+export const createSavedPlace = async (createSavedPlaceRequest: CreateSavedPlaceRequest, options?: Parameters<typeof apiRequest>[1]): Promise<SavedPlaceDto> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return apiRequest<SavedPlaceDto>(getCreateSavedPlaceUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(createSavedPlaceRequest)
+  }
+);}
+
+
+export const getUpdateSavedPlaceUrl = (id: string,) => {
+
+
+
+
+  return `/geo-api/me/places/${id}`
+}
+
+/**
+ * @summary Rename, annotate, or (un)favorite a saved place.
+ */
+export const updateSavedPlace = async (id: string,
+    updateSavedPlaceRequest: UpdateSavedPlaceRequest, options?: Parameters<typeof apiRequest>[1]): Promise<SavedPlaceDto> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return apiRequest<SavedPlaceDto>(getUpdateSavedPlaceUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(updateSavedPlaceRequest)
+  }
+);}
+
+
+export const getDeleteSavedPlaceUrl = (id: string,) => {
+
+
+
+
+  return `/geo-api/me/places/${id}`
+}
+
+/**
+ * @summary Remove a saved place.
+ */
+export const deleteSavedPlace = async (id: string, options?: Parameters<typeof apiRequest>[1]): Promise<void> => {
+
+  return apiRequest<void>(getDeleteSavedPlaceUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
 
 
   }
