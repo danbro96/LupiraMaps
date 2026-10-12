@@ -7,7 +7,7 @@ import type { MapHit } from '@lupira/maps-domain/mapHits';
 import { describeHit, hitActions, type HitAction } from '@lupira/maps-domain/mapHitLabels';
 import { MAP_COLORS, type MapTheme } from '@danbro96/lupira-tokens-map/map';
 import { useInvalidatePlaces } from '../../../state/useInvalidate';
-import { useCreatePlaceAtPin } from '../../../state/usePlaces';
+import { usePlaceFromPin } from '../../../state/usePlaces';
 import { errText } from '../../errText';
 import { useSnackbar } from '@danbro96/lupira-web-mui/SnackbarHost';
 import { WrapRow } from '../WrapRow';
@@ -92,13 +92,13 @@ function HitDetail({ hit, onAction, onOpenPlace }: {
 
 /** An unanchored hotspot can be promoted to a gazetteer place. */
 function SaveHotspot({ hit, onSaved }: { hit: Extract<MapHit, { kind: 'hotspot' }>; onSaved: (placeId: string) => void }) {
-  const create = useCreatePlaceAtPin();
+  const create = usePlaceFromPin();
   const invalidatePlaces = useInvalidatePlaces();
   const showSnack = useSnackbar();
-  const save = () => create.mutate({ name: hit.label ?? 'Unnamed spot', lat: hit.point.lat, lon: hit.point.lon }, {
+  const save = () => create.mutate({ name: hit.label, lat: hit.point.lat, lon: hit.point.lon }, {
     onSuccess: (place) => {
       invalidatePlaces();
-      onSaved(place.id);
+      if (place.placeId) onSaved(place.placeId);
     },
     onError: (e) => showSnack(errText(e) ?? 'Request failed.'),
   });

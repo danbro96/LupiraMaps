@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { findSavedPlace, orderSavedPlaces, suggestedPlaceLabel, type SavedPlaceRow } from './savedPlaces';
+import { findSavedPlace, orderSavedPlaces, type SavedPlaceRow } from './savedPlaces';
 
 const row = (id: string, label: string, isFavorite = false, placeId: string | null = null): SavedPlaceRow =>
   ({ id, label, isFavorite, placeId });
@@ -21,15 +21,5 @@ describe('findSavedPlace', () => {
   it('falls back to the saved place labelling a gazetteer place', () => {
     expect(findSavedPlace(rows, { placeId: 'p1' })?.id).toBe('s1');
     expect(findSavedPlace(rows, { placeId: 'p9' })).toBeNull();
-  });
-});
-
-describe('suggestedPlaceLabel', () => {
-  it('takes the most specific line of the geocode hit', () => {
-    expect(suggestedPlaceLabel({ displayName: 'Storgatan 1, 685 30 Torsby, Sverige' })).toBe('Storgatan 1');
-  });
-
-  it('is empty without a hit', () => {
-    expect(suggestedPlaceLabel(null)).toBe('');
   });
 });

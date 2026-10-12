@@ -4,8 +4,10 @@
  * LupiraMaps BFF
  * OpenAPI spec version: v1
  */
+import type { ReversePrecision } from './reversePrecision';
 
 export type ReverseGeocodeParams = {
 lat: number;
 lon: number;
+precision?: ReversePrecision;
 };

@@ -1,5 +1,4 @@
-// The saved-places list and the "save this spot" form. Field names mirror geo's SavedPlaceDto and
-// GeocodeResultDto so rows pass structurally.
+// The saved-places list. Field names mirror geo's SavedPlaceDto so rows pass structurally.
 
 export interface SavedPlaceRow {
   id: string;
@@ -24,9 +23,4 @@ export function findSavedPlace<T extends SavedPlaceRow>(
   if (savedPlaceId) return rows.find((r) => r.id === savedPlaceId) ?? null;
   if (placeId) return rows.find((r) => r.placeId === placeId) ?? null;
   return null;
-}
-
-/** A name to prefill when saving a spot: the reverse-geocode hit's most specific line. */
-export function suggestedPlaceLabel(hit: { displayName: string } | null | undefined): string {
-  return hit?.displayName.split(',')[0]?.trim() ?? '';
 }

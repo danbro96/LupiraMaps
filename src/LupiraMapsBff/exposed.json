@@ -42,6 +42,7 @@
       "POST /curation/prune",
       "POST /me/places",
       "POST /places",
+      "POST /places/from-pin",
       "POST /places/lookup",
       "POST /places/{id}/regeocode"
     ],

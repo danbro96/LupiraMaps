@@ -719,6 +719,75 @@
         ]
       }
     },
+    "/geo-api/places/from-pin": {
+      "post": {
+        "tags": [
+          "geo"
+        ],
+        "summary": "Create a place at a dropped pin (exact coordinates), or match one within 25 m with a similar name (resolution Matched/Created). Address and containment come from a building-precision reverse geocode; name defaults to \"Street HouseNumber, Locality\" at the pin, else its coordinates. Created even when the geocoder is down.",
+        "operationId": "CreatePlaceFromPin",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePlaceFromPinRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResolvePlaceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Cookie": [ ]
+          },
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
     "/geo-api/curation/orphans": {
       "get": {
         "tags": [
@@ -858,7 +927,7 @@
         "tags": [
           "geo"
         ],
-        "summary": "Coordinate → coarse label + structured address (cached; coordinates quantized to a ~100 m grid).",
+        "summary": "Coordinate → label + structured address (cached). precision=Area (default) shares one answer per ~100 m cell; precision=Building per ~11 m cell at building zoom.",
         "operationId": "ReverseGeocode",
         "parameters": [
           {
@@ -877,6 +946,13 @@
             "schema": {
               "type": "number",
               "format": "double"
+            }
+          },
+          {
+            "name": "precision",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/ReversePrecision"
             }
           }
         ],
@@ -937,15 +1013,65 @@
         "tags": [
           "geo"
         ],
-        "summary": "Text → candidate coordinates + structured address (cached).",
+        "summary": "Address/place → candidate coordinates + structured address. Pass q (free text) or structured fields (street with optional house number, postcode, locality, countryCode; street, or postcode+locality, required). intent=Search (default) resolves via the canonical geocoder (cached) with address autocomplete as a second source; intent=Typeahead asks the address autocomplete only, uncached, biased toward nearLat/nearLon. limit 1–20 (default 5).",
         "operationId": "ForwardGeocode",
         "parameters": [
           {
             "name": "q",
             "in": "query",
-            "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "street",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "postcode",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "locality",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "countryCode",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "intent",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/GeocodeIntent"
+            }
+          },
+          {
+            "name": "nearLat",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          {
+            "name": "nearLon",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "format": "double"
             }
           },
           {
@@ -967,6 +1093,16 @@
                   "items": {
                     "$ref": "#/components/schemas/GeocodeResultDto"
                   }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -3866,6 +4002,41 @@
         },
         "description": "A calendar the caller can access; `access` is the caller's own grant level.\n            `Class`/`Kind` classify the calendar. (Address books live in LupiraContactApi.)"
       },
+      "CreatePlaceFromPinRequest": {
+        "required": [
+          "latitude",
+          "longitude"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Defaults to the address at the pin (\"Street HouseNumber, Locality\"), else its coordinates."
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double"
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double"
+          },
+          "category": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PlaceCategory"
+              }
+            ]
+          }
+        },
+        "description": "Create (or match within 25 m) a place at a dropped pin. The location is the pin itself."
+      },
       "CreatePlaceRequest": {
         "required": [
           "name"
@@ -4216,12 +4387,20 @@
         ],
         "description": "A field is fully present, weak/partial (0.5), or absent."
       },
+      "GeocodeIntent": {
+        "enum": [
+          "Search",
+          "Typeahead",
+          null
+        ]
+      },
       "GeocodeResultDto": {
         "required": [
           "displayName",
           "latitude",
           "longitude",
-          "category"
+          "category",
+          "isArea"
         ],
         "type": "object",
         "properties": {
@@ -4263,6 +4442,28 @@
               "string"
             ]
           },
+          "street": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "houseNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "postcode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isArea": {
+            "type": "boolean",
+            "description": "A settlement or administrative area rather than a venue or address."
+          },
           "osmType": {
             "type": [
               "null",
@@ -4278,7 +4479,7 @@
             "format": "int64"
           }
         },
-        "description": "A geocoding hit — a coordinate + display label + best-effort structured address and category. Coarse by\n            design (coordinates are quantized to the cache grid)."
+        "description": "A geocoding hit — a coordinate + display label + best-effort structured address and category."
       },
       "HotspotDto": {
         "required": [
@@ -5293,6 +5494,16 @@
         },
         "description": "`Place` is null when the id is unknown or soft-deleted; on a merge redirect it is the survivor\n        (`Place.Id != RequestedId`). Containment is omitted — `GET /places/{id}` remains the detail call."
       },
+      "PlaceResolution": {
+        "enum": [
+          "Matched",
+          "Geocoded",
+          "Provisional",
+          "GeocodeUnavailable",
+          "Created"
+        ],
+        "description": "How Place resolution landed: an existing entry matched, a fresh geocode created one, a\n            coordinate-less provisional stub was created (address not found), the geocoder was unreachable so nothing was\n            created — retryable and must NOT be mistaken for \"not found\" — or a dropped pin created one."
+      },
       "PlaceSource": {
         "enum": [
           "User",
@@ -5648,6 +5859,50 @@
           }
         },
         "description": "A contact's tie to a geo place over a period. Current = today inside [movedIn, movedOut]; null ends are open."
+      },
+      "ResolvePlaceResponse": {
+        "required": [
+          "resolution",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "resolution": {
+            "$ref": "#/components/schemas/PlaceResolution"
+          },
+          "placeId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Null only when PlaceResolution ResolvePlaceResponse.Resolution is PlaceResolution.GeocodeUnavailable — the\n            geocoder was unreachable and nothing was created; the item is retryable.",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "latitude": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "longitude": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "ReversePrecision": {
+        "enum": [
+          "Area",
+          "Building",
+          null
+        ]
       },
       "SavedPlaceDto": {
         "required": [

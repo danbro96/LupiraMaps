@@ -3,12 +3,15 @@ import { onlineQuery } from '@danbro96/lupira-expo-query/onlineQuery';
 import { ApiError } from '@danbro96/lupira-http/apiError';
 import { getItemsByPlace } from '@lupira/maps-api/fetch/cal';
 import {
-  createSavedPlace, deleteSavedPlace, getPlace, listSavedPlaces, reverseGeocode, updatePlace, updateSavedPlace,
+  createPlaceFromPin, createSavedPlace, deleteSavedPlace, getPlace, listSavedPlaces, reverseGeocode, updatePlace,
+  updateSavedPlace,
 } from '@lupira/maps-api/fetch/geo';
-import type {
-  CreateSavedPlaceRequest, GeocodeResultDto, UpdatePlaceRequest, UpdateSavedPlaceRequest,
+import {
+  ReversePrecision, type CreateSavedPlaceRequest, type GeocodeResultDto, type SavedPlaceDto, type UpdatePlaceRequest,
+  type UpdateSavedPlaceRequest,
 } from '@lupira/maps-api/models';
 import type { GeoPoint } from '@danbro96/lupira-domain-places/geo';
+import { findSavedPlace } from '@lupira/maps-domain/savedPlaces';
 
 const SAVED_PLACES_KEY = ['map', 'saved-places'] as const;
 
@@ -25,12 +28,12 @@ export function usePlaceItems(placeId: string | null | undefined) {
   return useQuery({ ...onlineQuery(['places', 'items', placeId], () => getItemsByPlace(placeId!)), enabled: !!placeId });
 }
 
-/** A name suggestion for a spot. Not a persisted root: geocoding always goes to the network. */
+/** The building-precise address at a spot. Not a persisted root: geocoding always goes to the network. */
 export function useReverseGeocode(point: GeoPoint | null) {
   return useQuery({
-    ...onlineQuery(['geocode', 'reverse', point?.lat, point?.lon], async (): Promise<GeocodeResultDto | null> => {
+    ...onlineQuery(['geocode', 'reverse', 'building', point?.lat, point?.lon], async (): Promise<GeocodeResultDto | null> => {
       try {
-        return await reverseGeocode({ lat: point!.lat, lon: point!.lon });
+        return await reverseGeocode({ lat: point!.lat, lon: point!.lon, precision: ReversePrecision.Building });
       } catch (e) {
         if (e instanceof ApiError && e.status === 404) return null;
         throw e;
@@ -51,6 +54,24 @@ function useInvalidatePlaces() {
 export function useCreateSavedPlace() {
   const invalidate = useInvalidatePlaces();
   return useMutation({ mutationFn: (data: CreateSavedPlaceRequest) => createSavedPlace(data), onSuccess: invalidate });
+}
+
+/** Resolves a pin to a catalog place (matched within the dedupe radius, else created and auto-named when `name` is
+ *  blank), then saves it unless a saved place already labels it. */
+export function useSavePinnedPlace() {
+  const invalidate = useInvalidatePlaces();
+  return useMutation({
+    mutationFn: async ({ point, name, isFavorite }: { point: GeoPoint; name: string; isFavorite: boolean }):
+      Promise<{ saved: SavedPlaceDto; existed: boolean }> => {
+      const place = await createPlaceFromPin({ name: name || null, latitude: point.lat, longitude: point.lon });
+      if (!place.placeId) throw new Error('No place resolved at the pin.');
+      const existing = findSavedPlace(await listSavedPlaces(), { placeId: place.placeId });
+      if (existing) return { saved: existing, existed: true };
+      const saved = await createSavedPlace({ label: name || place.name, placeId: place.placeId, isFavorite });
+      return { saved, existed: false };
+    },
+    onSuccess: invalidate,
+  });
 }
 
 export function useUpdateSavedPlace() {

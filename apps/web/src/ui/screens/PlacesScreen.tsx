@@ -1,3 +1,4 @@
+import { pinStart } from '@danbro96/lupira-domain-places/pin';
 import { formatCoords } from '@danbro96/lupira-domain-places/places';
 import { lazy, Suspense, useState } from 'react';
 import Alert from '@mui/material/Alert';
@@ -22,6 +23,7 @@ import { classifyOrphan, defaultPruneSelection, type OrphanClass } from '@lupira
 import { useUpdatePlace } from '@lupira/maps-api/query/geo';
 import { PlaceSource, type OrphanCandidateDto, type PlaceDto } from '@lupira/maps-api/models';
 import { plural } from '@danbro96/lupira-domain-core/wording';
+import { GEO_API_BASE_URL } from '../../config';
 import { useInvalidatePlaces } from '../../state/useInvalidate';
 import {
   isLanOnly404,
@@ -38,7 +40,7 @@ import { DrawerSection } from '../components/DrawerSection';
 import { Page } from '../components/Page';
 import { PageHead } from '../components/Page';
 
-const MapPinDialog = lazy(() => import('../components/map/MapPinDialog'));
+const MapPinDialog = lazy(() => import('@danbro96/lupira-web-maplibre/MapPinDialog'));
 
 const LAN_ONLY_MSG = 'Geo curation is only reachable on the home network.';
 
@@ -138,8 +140,11 @@ function UnlocatedSection({ onHistory }: { onHistory: (p: { id: string; name: st
       {pinFor && (
         <Suspense fallback={null}>
           <MapPinDialog
+            open
             title={`Locate “${pinFor.name}”`}
-            onConfirm={(lat, lon) => {
+            start={pinStart({})}
+            geoBase={GEO_API_BASE_URL}
+            onConfirm={({ lat, lon }) => {
               update.mutate({ id: pinFor.id, data: { latitude: lat, longitude: lon } });
               setPinFor(null);
             }}

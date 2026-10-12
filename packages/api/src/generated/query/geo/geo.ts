@@ -24,6 +24,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  CreatePlaceFromPinRequest,
   CreatePlaceRequest,
   CreateSavedPlaceRequest,
   CurationEventDto,
@@ -38,6 +39,7 @@ import type {
   PrunePlaceResultDto,
   PrunePlacesRequest,
   RegeocodePlaceParams,
+  ResolvePlaceResponse,
   ReverseGeocodeParams,
   SavedPlaceDto,
   SearchPlacesParams,
@@ -838,6 +840,93 @@ export const useLookupPlaces = <TError = ProblemDetails,
       > => {
       return useMutation(getLookupPlacesMutationOptions(options), queryClient);
     }
+    export const getCreatePlaceFromPinUrl = () => {
+
+
+
+
+  return `/geo-api/places/from-pin`
+}
+
+/**
+ * @summary Create a place at a dropped pin (exact coordinates), or match one within 25 m with a similar name (resolution Matched/Created). Address and containment come from a building-precision reverse geocode; name defaults to "Street HouseNumber, Locality" at the pin, else its coordinates. Created even when the geocoder is down.
+ */
+export const createPlaceFromPin = async (createPlaceFromPinRequest: CreatePlaceFromPinRequest, options?: Parameters<typeof apiRequest>[1]): Promise<ResolvePlaceResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return apiRequest<ResolvePlaceResponse>(getCreatePlaceFromPinUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(createPlaceFromPinRequest)
+  }
+);}
+
+
+
+
+
+export const getCreatePlaceFromPinMutationKey = () => ['createPlaceFromPin'] as const;
+
+export const getCreatePlaceFromPinMutationOptions = <TError = ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPlaceFromPin>>, TError,CreatePlaceFromPinMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+): UseMutationOptions<Awaited<ReturnType<typeof createPlaceFromPin>>, TError,CreatePlaceFromPinMutationVariables, TContext> => {
+
+const mutationKey = getCreatePlaceFromPinMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createPlaceFromPin>>, CreatePlaceFromPinMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  createPlaceFromPin(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreatePlaceFromPinMutationResult = NonNullable<Awaited<ReturnType<typeof createPlaceFromPin>>>
+    export type CreatePlaceFromPinMutationBody = CreatePlaceFromPinRequest
+    export type CreatePlaceFromPinMutationError = ProblemDetails
+    export type CreatePlaceFromPinMutationVariables = {data: CreatePlaceFromPinRequest}
+
+    /**
+ * @summary Create a place at a dropped pin (exact coordinates), or match one within 25 m with a similar name (resolution Matched/Created). Address and containment come from a building-precision reverse geocode; name defaults to "Street HouseNumber, Locality" at the pin, else its coordinates. Created even when the geocoder is down.
+ */
+export const useCreatePlaceFromPin = <TError = ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPlaceFromPin>>, TError,CreatePlaceFromPinMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createPlaceFromPin>>,
+        TError,
+        CreatePlaceFromPinMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCreatePlaceFromPinMutationOptions(options), queryClient);
+    }
     export const getFindOrphanPlacesUrl = () => {
 
 
@@ -1041,7 +1130,7 @@ export const usePrunePlaces = <TError = ProblemDetails,
 }
 
 /**
- * @summary Coordinate → coarse label + structured address (cached; coordinates quantized to a ~100 m grid).
+ * @summary Coordinate → label + structured address (cached). precision=Area (default) shares one answer per ~100 m cell; precision=Building per ~11 m cell at building zoom.
  */
 export const reverseGeocode = async (params: ReverseGeocodeParams, options?: Parameters<typeof apiRequest>[1]): Promise<GeocodeResultDto> => {
 
@@ -1112,7 +1201,7 @@ export function useReverseGeocode<TData = Awaited<ReturnType<typeof reverseGeoco
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary Coordinate → coarse label + structured address (cached; coordinates quantized to a ~100 m grid).
+ * @summary Coordinate → label + structured address (cached). precision=Area (default) shares one answer per ~100 m cell; precision=Building per ~11 m cell at building zoom.
  */
 
 export function useReverseGeocode<TData = Awaited<ReturnType<typeof reverseGeocode>>, TError = ProblemDetails>(
@@ -1132,7 +1221,7 @@ export function useReverseGeocode<TData = Awaited<ReturnType<typeof reverseGeoco
 
 
 
-export const getForwardGeocodeUrl = (params: ForwardGeocodeParams,) => {
+export const getForwardGeocodeUrl = (params?: ForwardGeocodeParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -1148,9 +1237,9 @@ export const getForwardGeocodeUrl = (params: ForwardGeocodeParams,) => {
 }
 
 /**
- * @summary Text → candidate coordinates + structured address (cached).
+ * @summary Address/place → candidate coordinates + structured address. Pass q (free text) or structured fields (street with optional house number, postcode, locality, countryCode; street, or postcode+locality, required). intent=Search (default) resolves via the canonical geocoder (cached) with address autocomplete as a second source; intent=Typeahead asks the address autocomplete only, uncached, biased toward nearLat/nearLon. limit 1–20 (default 5).
  */
-export const forwardGeocode = async (params: ForwardGeocodeParams, options?: Parameters<typeof apiRequest>[1]): Promise<GeocodeResultDto[]> => {
+export const forwardGeocode = async (params?: ForwardGeocodeParams, options?: Parameters<typeof apiRequest>[1]): Promise<GeocodeResultDto[]> => {
 
   return apiRequest<GeocodeResultDto[]>(getForwardGeocodeUrl(params),
   {
@@ -1172,7 +1261,7 @@ export const getForwardGeocodeQueryKey = (params?: ForwardGeocodeParams,) => {
     }
 
 
-export const getForwardGeocodeQueryOptions = <TData = Awaited<ReturnType<typeof forwardGeocode>>, TError = ProblemDetails>(params: ForwardGeocodeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof forwardGeocode>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+export const getForwardGeocodeQueryOptions = <TData = Awaited<ReturnType<typeof forwardGeocode>>, TError = ProblemDetails>(params?: ForwardGeocodeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof forwardGeocode>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -1195,7 +1284,7 @@ export type ForwardGeocodeQueryError = ProblemDetails
 
 
 export function useForwardGeocode<TData = Awaited<ReturnType<typeof forwardGeocode>>, TError = ProblemDetails>(
- params: ForwardGeocodeParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof forwardGeocode>>, TError, TData>> & Pick<
+ params: undefined |  ForwardGeocodeParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof forwardGeocode>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof forwardGeocode>>,
           TError,
@@ -1205,7 +1294,7 @@ export function useForwardGeocode<TData = Awaited<ReturnType<typeof forwardGeoco
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useForwardGeocode<TData = Awaited<ReturnType<typeof forwardGeocode>>, TError = ProblemDetails>(
- params: ForwardGeocodeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof forwardGeocode>>, TError, TData>> & Pick<
+ params?: ForwardGeocodeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof forwardGeocode>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof forwardGeocode>>,
           TError,
@@ -1215,15 +1304,15 @@ export function useForwardGeocode<TData = Awaited<ReturnType<typeof forwardGeoco
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useForwardGeocode<TData = Awaited<ReturnType<typeof forwardGeocode>>, TError = ProblemDetails>(
- params: ForwardGeocodeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof forwardGeocode>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+ params?: ForwardGeocodeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof forwardGeocode>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary Text → candidate coordinates + structured address (cached).
+ * @summary Address/place → candidate coordinates + structured address. Pass q (free text) or structured fields (street with optional house number, postcode, locality, countryCode; street, or postcode+locality, required). intent=Search (default) resolves via the canonical geocoder (cached) with address autocomplete as a second source; intent=Typeahead asks the address autocomplete only, uncached, biased toward nearLat/nearLon. limit 1–20 (default 5).
  */
 
 export function useForwardGeocode<TData = Awaited<ReturnType<typeof forwardGeocode>>, TError = ProblemDetails>(
- params: ForwardGeocodeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof forwardGeocode>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+ params?: ForwardGeocodeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof forwardGeocode>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 

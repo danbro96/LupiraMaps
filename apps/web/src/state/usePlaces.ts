@@ -1,7 +1,7 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { useGetItemsByPlace } from '@lupira/maps-api/query/cal';
 import {
-  createPlace, getGetPlaceQueryKey, useCreateSavedPlace, useDeleteSavedPlace, useGetPlace, useListSavedPlaces, useUpdatePlace,
+  createPlaceFromPin, useCreateSavedPlace, useDeleteSavedPlace, useGetPlace, useListSavedPlaces, useUpdatePlace,
   useUpdateSavedPlace,
 } from '@lupira/maps-api/query/geo';
 import { findSavedPlace } from '@lupira/maps-domain/savedPlaces';
@@ -17,13 +17,11 @@ export function usePlaceItems(placeId: string | undefined) {
   return useGetItemsByPlace(placeId ?? '', { query: { enabled: !!placeId } });
 }
 
-/** Create a place at manually pinned coordinates. */
-export function useCreatePlaceAtPin() {
-  const queryClient = useQueryClient();
+/** The catalog place at a pin: one within the dedupe radius, else a new one (auto-named when `name` is omitted). */
+export function usePlaceFromPin() {
   return useMutation({
-    mutationFn: ({ name, lat, lon }: { name: string; lat: number; lon: number }) =>
-      createPlace({ name, latitude: lat, longitude: lon }),
-    onSuccess: (place) => queryClient.setQueryData(getGetPlaceQueryKey(place.id), place),
+    mutationFn: ({ name, lat, lon }: { name?: string | null; lat: number; lon: number }) =>
+      createPlaceFromPin({ name, latitude: lat, longitude: lon }),
   });
 }
 

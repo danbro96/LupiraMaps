@@ -38,6 +38,28 @@ public class AllowlistTests(BffTestFactory factory) : IClassFixture<BffTestFacto
         Assert.DoesNotContain(factory.Upstream.ReceivedPaths, p => p == upstreamPath || p == path);
     }
 
+    [Fact]
+    public async Task Place_from_pin_is_forwarded()
+    {
+        var client = Client();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", BffTestFactory.MintToken());
+
+        var resp = await client.PostAsJsonAsync("/geo-api/places/from-pin", new { latitude = 60.13, longitude = 12.99 });
+        Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
+        Assert.Equal("/places/from-pin", (await resp.Content.ReadFromJsonAsync<UpstreamEcho>())!.Path);
+    }
+
+    [Fact]
+    public async Task Place_from_geocode_is_404_and_never_forwarded()
+    {
+        var client = Client();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", BffTestFactory.MintToken());
+
+        var resp = await client.PostAsJsonAsync("/geo-api/places/from-geocode", new { osmType = "way", osmId = 42 });
+        Assert.Equal(HttpStatusCode.NotFound, resp.StatusCode);
+        Assert.DoesNotContain(factory.Upstream.ReceivedPaths, p => p == "/places/from-geocode");
+    }
+
     [Theory]
     [InlineData(null)]
     [InlineData("Bearer abc")]

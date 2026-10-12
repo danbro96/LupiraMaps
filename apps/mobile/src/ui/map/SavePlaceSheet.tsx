@@ -6,28 +6,28 @@ import { TextField } from '@danbro96/lupira-expo-paper/components/TextField';
 import { toast, toastError } from '@danbro96/lupira-expo-feedback/toast';
 import { useOnline } from '@danbro96/lupira-expo-query/online';
 import type { GeoPoint } from '@danbro96/lupira-domain-places/geo';
+import { pinNameSuggestion } from '@danbro96/lupira-domain-places/pin';
 import { formatCoords } from '@danbro96/lupira-domain-places/places';
-import { suggestedPlaceLabel } from '@lupira/maps-domain/savedPlaces';
-import { useCreateSavedPlace, useReverseGeocode } from '../../state/usePlaces';
+import { useReverseGeocode, useSavePinnedPlace } from '../../state/usePlaces';
 import { Sheet } from '../components/Sheet';
 import { spacing, useColors } from '../theme';
 
-/** Saves a long-pressed spot as a raw-coordinate saved place; the name starts as the reverse-geocode suggestion. */
+/** Saves a long-pressed spot as a catalog place plus a saved place on it; the name starts as the address suggestion. */
 export function SavePlaceSheet({ point, onDismiss }: { point: GeoPoint; onDismiss: () => void }) {
   const c = useColors();
   const online = useOnline();
   const geo = useReverseGeocode(point);
-  const create = useCreateSavedPlace();
+  const create = useSavePinnedPlace();
   const [edited, setEdited] = useState<string | null>(null);
   const [isFavorite, setFavorite] = useState(false);
-  const label = edited ?? suggestedPlaceLabel(geo.data);
+  const label = edited ?? pinNameSuggestion(geo.data) ?? '';
 
   const save = () =>
     create.mutate(
-      { label: label.trim(), latitude: point.lat, longitude: point.lon, isFavorite },
+      { point, name: label.trim(), isFavorite },
       {
-        onSuccess: (saved) => {
-          toast(`Saved “${saved.label}”`);
+        onSuccess: ({ saved, existed }) => {
+          toast(existed ? `Already saved as “${saved.label}”` : `Saved “${saved.label}”`);
           onDismiss();
         },
         onError: () => toastError("Couldn't save the place"),
@@ -44,7 +44,7 @@ export function SavePlaceSheet({ point, onDismiss }: { point: GeoPoint; onDismis
           <Switch value={isFavorite} onValueChange={setFavorite} accessibilityLabel="Favorite" />
         </View>
         <View style={styles.row}>
-          <Button title="Save" onPress={save} loading={create.isPending} disabled={!online || label.trim() === ''} />
+          <Button title="Save" onPress={save} loading={create.isPending} disabled={!online} />
           <Button title="Cancel" variant="text" onPress={onDismiss} />
         </View>
         {!online && <Text style={{ color: c.textSubtle }}>Saving needs a connection.</Text>}
