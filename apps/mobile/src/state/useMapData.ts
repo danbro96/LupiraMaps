@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query';
 import { onlineQuery } from '@danbro96/lupira-expo-query/onlineQuery';
 import type { FeatureCollection } from 'geojson';
 import { getHotspots } from '@lupira/maps-api/fetch/cal';
-import { listSavedPlaces } from '@lupira/maps-api/fetch/geo';
 import { getPhotoMap } from '@lupira/maps-api/fetch/photo';
 import type { MapViewport } from '@danbro96/lupira-domain-places/geo';
 import { dayEndIso, dayStartIso } from '@danbro96/lupira-domain-core/time';
@@ -25,6 +24,7 @@ import { useMyContactId } from './useMe';
 import { useOccurrencesBetween } from './useOccurrences';
 import { usePlaceCoords } from './usePlaceLookup';
 import { useParentsHomes, useResidencyRows } from './useResidencies';
+import { useSavedPlaces } from './usePlaces';
 
 /** GeoJSON layers for the map. Every key sits under a root the read cache persists (`sync/queryClient`), so
  *  a cold start offline still draws what was last seen. */
@@ -110,7 +110,7 @@ export function useContactFeatures(enabled: boolean): FeatureCollection {
 
 /** Saved-place pins (favorites first is the API's order; gazetteer link or raw pin). */
 export function useSavedPlaceFeatures(enabled: boolean): FeatureCollection {
-  const q = useQuery({ ...onlineQuery(['map', 'saved-places'], () => listSavedPlaces()), enabled });
+  const q = useSavedPlaces(enabled);
 
   return enabled ? savedPlaceFeatures(q.data ?? []) : EMPTY_FEATURES;
 }

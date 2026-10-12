@@ -10,17 +10,19 @@ function parseAt(raw: string): MapTarget | undefined {
 const parseLayers = (raw: string): string[] => (raw === 'none' ? [] : raw.split(','));
 const parse = { at: parseAt, layers: parseLayers };
 
-/** `lupiramaps://at/{lon},{lat}`, `lupiramaps://?at={lon},{lat}&layers=…` and `lupiramaps://places` all open
- *  the map. The OIDC redirect (lupiramaps://oauthredirect) matches nothing here and is ignored by navigation. */
+/** `lupiramaps://at/{lon},{lat}` and `lupiramaps://?at={lon},{lat}&layers=…` open the map, `lupiramaps://places` the
+ *  saved places over it. The OIDC redirect (lupiramaps://oauthredirect) matches nothing here and is ignored by navigation. */
 export const linking: LinkingOptions<RootStackParamList> = {
   prefixes: ['lupiramaps://'],
   config: {
+    initialRouteName: 'Map',
     screens: {
       Map: {
         path: 'at/:at',
         parse,
-        alias: [{ path: '', parse }, { path: 'places', parse }],
+        alias: [{ path: '', parse }],
       },
+      Places: 'places',
     },
   },
 };

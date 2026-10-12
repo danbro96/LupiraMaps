@@ -21,3 +21,8 @@ export function classifyOrphan(refs: OrphanRefCounts): OrphanClass {
 export function defaultPruneSelection<T extends OrphanRefCounts & { placeId: string }>(rows: readonly T[]): string[] {
   return rows.filter((r) => classifyOrphan(r) === 'prunable').map((r) => r.placeId);
 }
+
+/** `BusStop` → `Bus stop`: the enum name as a picker label. */
+export function placeCategoryLabel(category: string): string {
+  return category.replace(/([a-z])([A-Z])/g, (_, a: string, b: string) => `${a} ${b.toLowerCase()}`);
+}

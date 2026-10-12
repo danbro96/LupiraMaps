@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { classifyOrphan, defaultPruneSelection } from './placeCuration';
+import { classifyOrphan, defaultPruneSelection, placeCategoryLabel } from './placeCuration';
 
 const zero = { contactRefs: 0, calendarLiveRefs: 0, calendarDeletedRefs: 0, savedPlaceRefs: 0 };
 
@@ -32,5 +32,12 @@ describe('defaultPruneSelection', () => {
 
   it('is empty for no rows', () => {
     expect(defaultPruneSelection([])).toEqual([]);
+  });
+});
+
+describe('placeCategoryLabel', () => {
+  it('splits compound enum names into a sentence-case label', () => {
+    expect(placeCategoryLabel('BusStop')).toBe('Bus stop');
+    expect(placeCategoryLabel('Cafe')).toBe('Cafe');
   });
 });

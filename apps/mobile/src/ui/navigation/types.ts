@@ -4,6 +4,9 @@ export type RootStackParamList = {
   /** `at` flies to one point and pins it — how another app hands a place over; `layers` naming photos shows
    *  the photo layer for that visit even if it is off. */
   Map: { at?: MapTarget; layers?: string[] } | undefined;
+  Places: undefined;
+  /** A gazetteer place, a saved place, or both (a saved place labelling a gazetteer place). */
+  PlaceDetail: { placeId?: string; savedPlaceId?: string };
   Settings: undefined;
   LocationSettings: undefined;
   Login: undefined;

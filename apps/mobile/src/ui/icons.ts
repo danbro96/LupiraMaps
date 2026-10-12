@@ -31,6 +31,7 @@ export const ICONS = {
   directions: 'directions',
   download: 'file-download',
   dropDown: 'arrow-drop-down',
+  edit: 'edit',
   email: 'email',
   event: 'event',
   eventBusy: 'event-busy',

@@ -8,14 +8,15 @@ import {
   type StyleSpecification,
   type ViewStateChangeEvent,
 } from '@maplibre/maplibre-react-native';
-import { useFocusEffect, useIsFocused, useRoute, type RouteProp } from '@react-navigation/native';
+import { useFocusEffect, useIsFocused, useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { Feature } from 'geojson';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { NativeSyntheticEvent } from 'react-native';
 import { StyleSheet, useColorScheme, useWindowDimensions, View } from 'react-native';
 import { ActivityIndicator, Banner, useTheme } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { mapViewport, type MapViewport } from '@danbro96/lupira-domain-places/geo';
+import { mapViewport, type GeoPoint, type MapViewport } from '@danbro96/lupira-domain-places/geo';
 import type { HitAction } from '@lupira/maps-domain/mapHitLabels';
 import { hitsFromFeatures, type HitPoint, type MapHit } from '@lupira/maps-domain/mapHits';
 import { photoCellBounds } from '@lupira/maps-domain/mapFeatures';
@@ -38,6 +39,7 @@ import { DEFAULT_LAYERS, LAYER_KEYS, type LayerKey } from '@lupira/maps-tokens/m
 import { LayersFab, LayersSheet, LocateFab, type FollowMode } from '../map/MapChrome';
 import { MapPreviewSheet } from '../map/MapPreviewSheet';
 import { QuickPlacesStrip } from '../map/QuickPlacesStrip';
+import { SavePlaceSheet } from '../map/SavePlaceSheet';
 import {
   ContactsLayer, EventsLayer, HotspotsLayer, LivePuck, MovementLayer, PhotosLayer, SavedPlacesLayer, SelectionPin,
 } from '../map/layers';
@@ -66,6 +68,7 @@ export function MapScreen() {
   const paper = useTheme();
   const insets = useSafeAreaInsets();
   const route = useRoute<RouteProp<RootStackParamList, 'Map'>>();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const scheme = useColorScheme();
   const theme: MapTheme = scheme === 'dark' ? 'dark' : 'light';
 
@@ -85,6 +88,7 @@ export function MapScreen() {
   const [follow, setFollow] = useState<FollowMode>('off');
   const [hits, setHits] = useState<MapHit[] | null>(null);
   const [selected, setSelected] = useState<HitPoint | null>(null);
+  const [saving, setSaving] = useState<GeoPoint | null>(null);
   const [now, setNow] = useState(minuteNow);
 
   const span = mapWindow(since, now);
@@ -210,6 +214,18 @@ export function MapScreen() {
     setHits(tapped);
   };
 
+  const onMapLongPress = (e: NativeSyntheticEvent<PressEvent>) => {
+    const [lon, lat] = e.nativeEvent.lngLat;
+    setHits(null);
+    setSelected({ lon, lat });
+    setSaving({ lon, lat });
+  };
+
+  const closeSave = () => {
+    setSaving(null);
+    setSelected(null);
+  };
+
   /** A jump frames the place by what it is, across the screen's width; an event also opens its card. */
   const onQuickPick = (p: QuickPlace) => {
     if (!p.point) return;
@@ -231,6 +247,15 @@ export function MapScreen() {
       const day = ymd(new Date(hit.kind === 'photo' ? hit.takenAt : hit.arriveTs));
       closePreview();
       void openSibling((l) => l.photosRangeUrl({ from: day, to: day }));
+      return;
+    }
+    if (action === 'place') {
+      setHits(null);
+      if (hit.kind === 'saved') {
+        navigation.navigate('PlaceDetail', { savedPlaceId: hit.savedPlaceId ?? undefined, placeId: hit.placeId ?? undefined });
+      } else if (hit.kind === 'hotspot' && hit.placeId) {
+        navigation.navigate('PlaceDetail', { placeId: hit.placeId });
+      }
       return;
     }
     if (action !== 'open') return;
@@ -280,6 +305,7 @@ export function MapScreen() {
             onRegionDidChange={onRegionDidChange}
             onDidFinishLoadingMap={onMapLoaded}
             onPress={(e) => void onMapPress(e)}
+            onLongPress={onMapLongPress}
           >
             <Camera ref={cameraRef} initialViewState={initialView} />
             {/* Always mounted: a layer mounted later is appended above the pins and would cover them. */}
@@ -317,6 +343,7 @@ export function MapScreen() {
       )}
 
       {hits && <MapPreviewSheet hits={hits} theme={theme} onAction={onHitAction} onDismiss={closePreview} />}
+      {saving && <SavePlaceSheet point={saving} onDismiss={closeSave} />}
     </View>
   );
 }

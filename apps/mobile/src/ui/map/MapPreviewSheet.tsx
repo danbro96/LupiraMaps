@@ -13,6 +13,7 @@ import { ICONS } from '../icons';
 import { radii, spacing, useColors } from '../theme';
 
 const ROW_THUMB = 40;
+const PLACE_SCREENS = { placeScreen: true, savedPlaceScreen: true };
 
 /** What a tap on the map found. One thing gets a preview card with its way into the full screen; several —
  *  a contact's home with events and photos on it — get a list, and a row opens its screen directly. */
@@ -42,7 +43,7 @@ export function MapPreviewSheet({ hits, theme, onAction, onDismiss }: {
 function HitCard({ hit, theme, onAction }: { hit: MapHit; theme: MapTheme; onAction: (hit: MapHit, action: HitAction) => void }) {
   const c = useColors();
   const { title, detail } = describeHit(hit);
-  const actions = hitActions(hit);
+  const actions = hitActions(hit, PLACE_SCREENS);
   return (
     <View style={styles.card}>
       {hit.kind === 'photo' && hit.thumbUrl && (
@@ -69,7 +70,7 @@ function HitCard({ hit, theme, onAction }: { hit: MapHit; theme: MapTheme; onAct
 function HitRow({ hit, theme, onAction }: { hit: MapHit; theme: MapTheme; onAction: (hit: MapHit, action: HitAction) => void }) {
   const c = useColors();
   const { title, detail } = describeHit(hit);
-  const primary = hitActions(hit)[0]?.action;
+  const primary = hitActions(hit, PLACE_SCREENS)[0]?.action;
   return (
     <Pressable
       onPress={primary ? () => onAction(hit, primary) : undefined}

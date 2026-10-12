@@ -48,16 +48,20 @@ export function describeHit(hit: MapHit): HitText {
   }
 }
 
-/** `placeScreen`: the app has a screen for a place (web's place panel); without one, saved places and
- *  hotspots are preview-only. */
-export function hitActions(hit: MapHit, { placeScreen = false }: { placeScreen?: boolean } = {}): { action: HitAction; label: string }[] {
+/** `placeScreen`: the app has a screen for a gazetteer place; without one, saved places and hotspots are
+ *  preview-only. `savedPlaceScreen`: that screen also opens a saved place pinned at a raw coordinate. */
+export function hitActions(
+  hit: MapHit,
+  { placeScreen = false, savedPlaceScreen = false }: { placeScreen?: boolean; savedPlaceScreen?: boolean } = {},
+): { action: HitAction; label: string }[] {
   switch (hit.kind) {
     case 'event': return [{ action: 'open', label: 'Open event' }];
     case 'contact': return [{ action: 'open', label: 'Open contact' }];
     case 'photo': return [{ action: 'open', label: 'Open photo' }, { action: 'day', label: 'All from this day' }];
     case 'photoCell': return [{ action: 'zoom', label: 'Zoom in' }];
     case 'visit': return [{ action: 'day', label: 'Photos from this day' }];
-    case 'saved': return placeScreen && hit.placeId ? [{ action: 'place', label: 'Open place' }] : [];
+    case 'saved':
+      return (placeScreen && hit.placeId) || (savedPlaceScreen && hit.savedPlaceId) ? [{ action: 'place', label: 'Open place' }] : [];
     case 'hotspot': return placeScreen && hit.placeId ? [{ action: 'place', label: 'Open place' }] : [];
     case 'currentFix': return [];
   }

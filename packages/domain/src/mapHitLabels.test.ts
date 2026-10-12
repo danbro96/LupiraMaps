@@ -19,7 +19,7 @@ describe('describeHit', () => {
 });
 
 describe('hitActions', () => {
-  const saved: MapHit = { kind: 'saved', key: 's', point, label: 'Gym', placeId: 'pl', category: null };
+  const saved: MapHit = { kind: 'saved', key: 's', point, label: 'Gym', savedPlaceId: 's1', placeId: 'pl', category: null };
 
   it('offers the full screen each kind has', () => {
     expect(hitActions({ kind: 'photo', key: 'p', point, photoId: 'p', takenAt: '2026-09-01T10:00:00Z', placeLabel: null, thumbUrl: null }).map((a) => a.action))
@@ -29,5 +29,11 @@ describe('hitActions', () => {
   it('opens a place only where the app has a place screen', () => {
     expect(hitActions(saved)).toEqual([]);
     expect(hitActions(saved, { placeScreen: true })).toEqual([{ action: 'place', label: 'Open place' }]);
+  });
+
+  it('opens a raw-coordinate saved place only where the place screen takes saved places', () => {
+    const pin: MapHit = { ...saved, placeId: null };
+    expect(hitActions(pin, { placeScreen: true })).toEqual([]);
+    expect(hitActions(pin, { savedPlaceScreen: true })).toEqual([{ action: 'place', label: 'Open place' }]);
   });
 });
