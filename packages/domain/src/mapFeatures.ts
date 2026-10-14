@@ -30,10 +30,16 @@ function located(place: PlacePoint | undefined): place is PlacePoint & { longitu
 
 const collect = (features: Feature[]): FeatureCollection => ({ type: 'FeatureCollection', features });
 
+export function occurrenceKey(originalStart: string | null | undefined): string | null {
+  const t = originalStart ? Date.parse(originalStart) : NaN;
+  return Number.isNaN(t) ? null : new Date(t).toISOString().replace(/\.\d{3}Z$/, 'Z');
+}
+
 export interface EventPin {
   itemId: string;
   title?: string | null;
   start: string;
+  originalStart?: string | null;
   calendarId?: string | null;
   color?: string | null;
   placeId?: string | null;
@@ -63,6 +69,7 @@ export function eventFeatures(
       itemId: pin.itemId,
       title: pin.title ?? place.name,
       start: pin.start,
+      occurrence: occurrenceKey(pin.originalStart),
       calendarId: pin.calendarId ?? null,
       color: pin.color ?? null,
       placeId: place.id,

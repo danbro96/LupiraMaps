@@ -27,6 +27,17 @@ describe('quickPlaces', () => {
     expect(chips[0].spanM).toBe(400);
     expect(chips[2].spanM).toBe(250);
   });
+
+  it('opens an event chip at the occurrence it shows', () => {
+    const chips = quickPlaces({
+      now, places, ownAddresses: [],
+      upcoming: [
+        { itemId: 'weekly', title: 'Choir', start: '2026-10-07T18:00:00+02:00', originalStart: '2026-10-07T16:00:00+00:00', placeId: 'venue', color: null },
+        { itemId: 'once', title: 'Dinner', start: '2026-10-08T17:00:00Z', placeId: 'office', color: null },
+      ],
+    });
+    expect(chips.map((c) => c.event?.occurrence)).toEqual(['2026-10-07T16:00:00Z', null]);
+  });
 });
 
 describe('quickPlaces parents', () => {

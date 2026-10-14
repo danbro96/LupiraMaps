@@ -6,6 +6,7 @@ import type { GeoPoint } from '@danbro96/lupira-domain-places/geo';
 import { displayTitle } from '@danbro96/lupira-domain-events/itemLabels';
 import { placeSpanM } from '@danbro96/lupira-domain-maps/mapZoom';
 import { fmtDayShort, fmtTime, isToday } from '@danbro96/lupira-domain-core/time';
+import { occurrenceKey } from './mapFeatures';
 
 export const QUICK_EVENTS_SHOWN = 5;
 /** Some upcoming places won't resolve to a point; fetching more keeps the strip full. */
@@ -23,6 +24,7 @@ export interface UpcomingPlacedEvent {
   itemId: string;
   title: string | null;
   start: string;
+  originalStart?: string | null;
   placeId: string;
   color: string | null;
 }
@@ -35,7 +37,7 @@ export type QuickPlace = {
   point: GeoPoint | null;
   /** Ground a jump should frame (`mapZoom`). */
   spanM: number;
-  event?: { itemId: string; title: string | null; start: string; color: string | null };
+  event?: { itemId: string; title: string | null; start: string; occurrence: string | null; color: string | null };
 };
 
 export function quickPlaces({ ownAddresses, parents = [], places, upcoming, now = new Date() }: {
@@ -77,7 +79,7 @@ export function quickPlaces({ ownAddresses, parents = [], places, upcoming, now 
       label: `${displayTitle(e.title)} · ${isToday(start) ? fmtTime(start) : fmtDayShort(start)}`,
       point,
       spanM: placeSpanM(places.get(e.placeId)),
-      event: { itemId: e.itemId, title: e.title, start: e.start, color: e.color },
+      event: { itemId: e.itemId, title: e.title, start: e.start, occurrence: occurrenceKey(e.originalStart), color: e.color },
     }];
   }).slice(0, QUICK_EVENTS_SHOWN);
 

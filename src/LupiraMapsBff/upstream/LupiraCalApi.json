@@ -173,6 +173,115 @@
         ]
       }
     },
+    "/place-usage": {
+      "get": {
+        "tags": [
+          "Places"
+        ],
+        "summary": "Places your events used — as their location or a travel endpoint — derived at read time from non-cancelled occurrences in calendars you can read (or calendarId), recurrences expanded up to `to`. Merged-away place ids fold into their survivor. Per place: event count, last day, per-category counts and the top 5 attendees. Ordered by last day, then event count. Defaults: from = 3 years before now, to = now, limit 200 (max 500).",
+        "operationId": "GetPlaceUsage",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": [
+                "null",
+                "string"
+              ],
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": [
+                "null",
+                "string"
+              ],
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "calendarId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PlaceUsageDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
     "/participation/summary": {
       "get": {
         "tags": [
@@ -811,7 +920,7 @@
         "tags": [
           "CalendarItems"
         ],
-        "summary": "Create a calendar item (filed into CalendarId if given, else unfiled for later curation). A location must be a resolved PlaceId.",
+        "summary": "Create a calendar item (filed into CalendarId if given, else unfiled for later curation). A location is a resolved PlaceId (Location = its label), or free text kept as a label only with LocationUnresolved=true (no geo lookup); free text alone 400s.",
         "operationId": "CreateItem",
         "requestBody": {
           "content": {
@@ -877,7 +986,7 @@
         "tags": [
           "CalendarItems"
         ],
-        "summary": "Create many items in one call (idempotent per item on SourceKey; children reference parents by ParentSourceKey in any order). Returns a per-item result (created|existed|invalid) in input order.",
+        "summary": "Create many items in one call (idempotent per item on SourceKey; children reference parents by ParentSourceKey in any order). Returns a per-item result (created|existed|forbidden|invalid) in input order.",
         "operationId": "CreateItemsBatch",
         "requestBody": {
           "content": {
@@ -915,6 +1024,110 @@
           },
           "403": {
             "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/items/drafts": {
+      "post": {
+        "tags": [
+          "CalendarItems"
+        ],
+        "summary": "Reads a calendar file into item drafts without saving them.",
+        "description": "The body is the file's text (text/calendar or text/plain, at most 5 MB). Each draft maps 1:1 onto CreateItem; send its SourceKey (derived per caller from the event) so creating from the same file twice is a no-op. A recurring event's changed occurrences are not part of its draft. Location is a free-text label to resolve to a place first. zone (IANA id, e.g. the device zone) reads times the file gives without a zone as wall-clock times there and becomes their StartTimezone; without it they are read as UTC. An unknown zone is a 400.",
+        "operationId": "ReadItemDrafts",
+        "parameters": [
+          {
+            "name": "zone",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "text/calendar": {
+              "schema": {
+                "type": "string"
+              }
+            },
+            "text/plain": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ItemDraftDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Payload Too Large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Unsupported Media Type",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1021,7 +1234,7 @@
         "tags": [
           "CalendarItems"
         ],
-        "summary": "Update a calendar item. Plain fields: omitted = kept; fields paired with a *Provided sentinel are written verbatim when it is true (enables clearing recurrence, switching all-day, editing timezones, clearing the parent with ParentItemIdProvided=true and a null ParentItemId). Offline clients send Idempotency-Key (their command id) + body OccurredAt for replay-safe, last-writer-wins updates.",
+        "summary": "Update a calendar item. Plain fields: omitted = kept; fields paired with a *Provided sentinel are written verbatim when it is true (enables clearing recurrence, switching all-day, editing timezones, clearing the parent with ParentItemIdProvided=true and a null ParentItemId). A location change needs PlaceId, or LocationUnresolved=true to store Location as a label with no place. Offline clients send Idempotency-Key (their command id) + body OccurredAt for replay-safe, last-writer-wins updates.",
         "operationId": "UpdateItem",
         "parameters": [
           {
@@ -1334,7 +1547,7 @@
         "tags": [
           "CalendarItems"
         ],
-        "summary": "Change one occurrence of a recurring item, addressed by its unmodified start (UTC, e.g. 2026-05-31T16:00:00Z). Excluded=true removes it from the series; otherwise StartsAt/EndsAt/Title/Description/Status override the series for that occurrence (omitted = inherit). Replaces the occurrence's previous change.",
+        "summary": "Change one occurrence of a recurring item, addressed by its unmodified start (UTC, e.g. 2026-05-31T16:00:00Z; originalStart from SearchItems). Excluded=true removes it from the series; otherwise StartsAt/EndsAt/Title/Description/Status override the series for that occurrence (omitted = inherit). Replaces the occurrence's previous change.",
         "operationId": "ChangeOccurrence",
         "parameters": [
           {
@@ -1493,6 +1706,130 @@
           },
           "400": {
             "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/items/{id}/occurrences/{originalStart}/following": {
+      "post": {
+        "tags": [
+          "CalendarItems"
+        ],
+        "summary": "Change one occurrence of a recurring item and every one after it, addressed by its unmodified start (UTC; originalStart from SearchItems). The series ends before it; a new series continuing it (continuesItemId) takes the rest with Changes applied, or Excluded=true deletes them. At the first occurrence the whole series is updated or deleted instead. SourceKey fixes the new series' id for offline clients; an OccurredAt older than the series' last schedule change is a 409. A one-off added occurrence can't start a series (400).",
+        "operationId": "ChangeFollowingOccurrences",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "originalStart",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeFollowingOccurrencesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeriesSplitDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2991,7 +3328,7 @@
         "tags": [
           "Participation"
         ],
-        "summary": "Invite a contact (must be a Contact id). role = chair|req-participant|opt-participant|non-participant (or the enum name); default req-participant, anything else 400s. A contact already invited is a no-op. Offline clients pass ?occurredAt= + Idempotency-Key for replay-safe delivery.",
+        "summary": "Invite a contact (must be a Contact id). role = chair|req-participant|opt-participant|non-participant (or the enum name); default req-participant, anything else 400s. A contact already invited is a no-op. Inviting to an item that had already ended (at occurredAt, else now) also confirms attendance, stamped at the item's end. Offline clients pass ?occurredAt= + Idempotency-Key for replay-safe delivery.",
         "operationId": "InviteParticipant",
         "parameters": [
           {
@@ -3101,7 +3438,7 @@
         "tags": [
           "Participation"
         ],
-        "summary": "Add a set of contacts as attendees in one call (add-only). Attended=true also marks them attended (historical backfill). Slim result (additions + already-present count), not the full item.",
+        "summary": "Add a set of contacts as attendees in one call (add-only). Attended omitted = marked attended only when the item has already ended (stamped at its end); true = always; false = never. Slim result (additions + already-present count), not the full item.",
         "operationId": "SetParticipants",
         "parameters": [
           {
@@ -3567,6 +3904,126 @@
         ]
       }
     },
+    "/items/{id}/participants/{participationId}/reminder": {
+      "put": {
+        "tags": [
+          "Participation"
+        ],
+        "summary": "Set this participant's own reminder for the item, delivered on their device. mode = Default|Off|Before; required, anything else 400s. minutesBefore (0..40320) is required for Before and rejected otherwise. Last writer wins per participation on occurredAt. Offline clients pass ?occurredAt= + Idempotency-Key for replay-safe delivery.",
+        "operationId": "SetParticipantReminder",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "participationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "mode",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "minutesBefore",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "occurredAt",
+            "in": "query",
+            "schema": {
+              "type": [
+                "null",
+                "string"
+              ],
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarItemDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
     "/items/{id}/participants/{participationId}": {
       "delete": {
         "tags": [
@@ -3651,12 +4108,85 @@
         ]
       }
     },
+    "/sync/items": {
+      "get": {
+        "tags": [
+          "Sync"
+        ],
+        "summary": "Paged item feed for offline mirrors. Omit since for a full sync (reset: replace the mirror; no tombstones); later pages and deltas return items the caller can read that changed past the cursor, plus ids of items deleted or no longer visible. Loop while hasMore, persisting cursor between calls.",
+        "operationId": "GetSyncItems",
+        "parameters": [
+          {
+            "name": "since",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncPageOfItemSyncChange"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
     "/sync/changes": {
       "get": {
         "tags": [
           "Sync"
         ],
-        "summary": "Delta feed for offline mirrors: everything the caller can read that changed past the cursor, plus tombstone ids for items deleted or no longer visible. Omit since for a full sync (tombstones suppressed — replace the mirror wholesale); loop while hasMore, persisting cursor between calls.",
+        "summary": "Alias of GET /sync/items for existing clients.",
         "operationId": "GetChanges",
         "parameters": [
           {
@@ -3681,7 +4211,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SyncChangesResponse"
+                  "$ref": "#/components/schemas/SyncPageOfItemSyncChange"
                 }
               }
             }
@@ -3692,6 +4222,52 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/sync/calendars": {
+      "get": {
+        "tags": [
+          "Sync"
+        ],
+        "summary": "Snapshot of the caller's calendars: always reset with every calendar in changed and no cursor; replace the local set on each call.",
+        "operationId": "GetSyncCalendars",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncPageOfContainerDto"
                 }
               }
             }
@@ -4004,6 +4580,10 @@
               "null",
               "array"
             ],
+            "items": {
+              "type": "string",
+              "format": "date-time"
+            },
             "description": "Recurring items: unmodified starts removed from the series."
           },
           "extraOccurrences": {
@@ -4011,6 +4591,10 @@
               "null",
               "array"
             ],
+            "items": {
+              "type": "string",
+              "format": "date-time"
+            },
             "description": "Recurring items: one-off starts added to the series."
           },
           "occurrenceOverrides": {
@@ -4061,6 +4645,14 @@
               "null",
               "string"
             ],
+            "format": "uuid"
+          },
+          "continuesItemId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The series this one continues, when it was split off at one of that series' occurrences.",
             "format": "uuid"
           },
           "tags": {
@@ -4142,6 +4734,7 @@
           "id",
           "isAllDay",
           "start",
+          "isChanged",
           "calendarIds",
           "childCount",
           "etag"
@@ -4184,6 +4777,18 @@
               "string"
             ],
             "format": "date-time"
+          },
+          "originalStart": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The start this occurrence has in the unmodified series — the key its per-occurrence changes and a split\n            address it by. Null when the item doesn't recur.",
+            "format": "date-time"
+          },
+          "isChanged": {
+            "type": "boolean",
+            "description": "This occurrence deviates from its series (moved, renamed, re-described or re-statused)."
           },
           "calendarIds": {
             "type": "array",
@@ -4299,6 +4904,42 @@
           }
         }
       },
+      "ChangeFollowingOccurrencesRequest": {
+        "type": "object",
+        "properties": {
+          "excluded": {
+            "type": "boolean",
+            "description": "Delete the occurrence and every one after it."
+          },
+          "changes": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "The update for the continuing series, as for the whole item (omitted fields keep the series' values).",
+                "$ref": "#/components/schemas/UpdateCalendarItemRequest"
+              }
+            ]
+          },
+          "sourceKey": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Client key for the continuing series: its id derives from it, so an offline client knows the id up front and\n            a replay lands on the same series."
+          },
+          "occurredAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Client wall-clock of the edit; an edit older than the series' last schedule change is rejected (409).\n            Omitted ⇒ server receive time.",
+            "format": "date-time"
+          }
+        },
+        "description": "Change one occurrence of a recurring item and every one after it. The series ends before that occurrence and,\n            unless bool ChangeFollowingOccurrencesRequest.Excluded, a new series continues from it with UpdateCalendarItemRequest? ChangeFollowingOccurrencesRequest.Changes applied; addressed at the first\n            occurrence it changes or deletes the whole series instead."
+      },
       "ChangeOccurrenceRequest": {
         "type": "object",
         "properties": {
@@ -4347,7 +4988,7 @@
             "format": "date-time"
           }
         },
-        "description": "Change one occurrence of a recurring item, identified by its unmodified start. bool ChangeOccurrenceRequest.Excluded removes it\n            from the series; otherwise the given members override the series for that occurrence (omitted = inherit). Each change\n            replaces the occurrence's previous one."
+        "description": "Change one occurrence of a recurring item, identified by its unmodified start. bool ChangeOccurrenceRequest.Excluded removes it\n            from the series; otherwise the given members override the series for that occurrence (omitted = inherit). Each change\n            replaces the occurrence's previous one. On an all-day series the times are dates at 00:00Z and DateTimeOffset? ChangeOccurrenceRequest.EndsAt is the\n            last day."
       },
       "CompletenessGap": {
         "required": [
@@ -4473,7 +5114,7 @@
               "null",
               "string"
             ],
-            "description": "Client-supplied provenance/idempotency key (e.g. an import `sourceKey`). When set, the item's stream id\n            is derived from it (DeterministicGuid), so re-creating with the same key is a no-op\n            that returns the existing item — safe batch/import replay. Also becomes the item's external UID. Omit for a random uid."
+            "description": "Client-supplied provenance/idempotency key (e.g. an import `sourceKey`). When set, the item's stream id\n            is derived from it (DeterministicGuid), so re-creating with the same key is a no-op\n            that returns the existing item — safe batch/import replay. A key pinning another principal's item the caller can't read (or a deleted one\n            in no calendar the caller can write) is a 403. Also becomes the item's external UID. Omit for a random uid."
           },
           "parentItemId": {
             "type": [
@@ -4507,7 +5148,7 @@
               "null",
               "string"
             ],
-            "description": "Free-text location resolved server-side to a LupiraGeoApi place (fail-closed if geo is up but can't resolve).\n            Prefer Guid? CreateCalendarItemRequest.PlaceId when you have already resolved/vetted the place (places-first imports) — then string? CreateCalendarItemRequest.Location\n            is used only as the display label."
+            "description": "The location's display label. Requires Guid? CreateCalendarItemRequest.PlaceId unless bool CreateCalendarItemRequest.LocationUnresolved is set;\n            free text alone is rejected."
           },
           "placeId": {
             "type": [
@@ -4516,6 +5157,10 @@
             ],
             "description": "A pre-resolved LupiraGeoApi place id, kept with string? CreateCalendarItemRequest.Location as its label. Checked against geo: an\n            unknown id is rejected, a merged-away id is stored as its survivor.",
             "format": "uuid"
+          },
+          "locationUnresolved": {
+            "type": "boolean",
+            "description": "Keep string? CreateCalendarItemRequest.Location as a label with no place (the caller couldn't resolve it); geo is not called.\n            Cannot be combined with Guid? CreateCalendarItemRequest.PlaceId."
           },
           "status": {
             "type": [
@@ -4637,7 +5282,7 @@
             ]
           }
         },
-        "description": "Create an item via REST/MCP. `CalendarId` optional — when set, the item is accepted into that calendar;\n            when null, the item is created unfiled (e.g. an automated source) for later curation. `Location` is free text\n            resolved to a <see cref=\"!:LupiraCalApi.Core.Domain.Place\" />. `Category`/`Status` are the enum names."
+        "description": "Create an item via REST/MCP. `CalendarId` optional — when set, the item is accepted into that calendar;\n            when null, the item is created unfiled (e.g. an automated source) for later curation. A location is a resolved\n            `PlaceId`, or free text with `LocationUnresolved`. `Category`/`Status` are the enum names."
       },
       "CreateCalendarItemsBatchRequest": {
         "required": [
@@ -4941,7 +5586,8 @@
           "invitedAt",
           "respondedAt",
           "attendedAt",
-          "leftAt"
+          "leftAt",
+          "reminder"
         ],
         "type": "object",
         "properties": {
@@ -4986,6 +5632,17 @@
               "string"
             ],
             "format": "date-time"
+          },
+          "reminder": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Null = the default reminder, delivered on the participant's device.",
+                "$ref": "#/components/schemas/ParticipantReminderDto"
+              }
+            ]
           }
         },
         "description": "One attendee's participation, composed from the participation events."
@@ -5022,7 +5679,7 @@
             ]
           }
         },
-        "description": "Per-item outcome of a batch create, aligned index-for-index with the request. `Status` is\n            `created` | `existed` (idempotent hit on SourceKey) | `invalid` (see `Error`)."
+        "description": "Per-item outcome of a batch create, aligned index-for-index with the request. `Status` is\n            `created` | `existed` (idempotent hit on SourceKey) | `forbidden` (no access to the calendar, or the SourceKey\n            belongs to an item the caller can't access; no `ItemId`) | `invalid` (see `Error`)."
       },
       "ItemCategory": {
         "enum": [
@@ -5037,7 +5694,8 @@
           "Activity",
           "Focus",
           "Chore"
-        ]
+        ],
+        "description": "What a calendar event is (its semantic identity). Reservation/travel/presence specifics are carried by\n            composable optionals on the item (see ItemDetails), not by this discriminator."
       },
       "ItemDetails": {
         "type": "object",
@@ -5100,6 +5758,103 @@
           }
         },
         "description": "Composable detail input for create/update. BookingDetail? ItemDetailsRequest.Booking (reservation/confirmation) attaches to any category;\nTravelLegRequest? ItemDetailsRequest.Travel applies to a `Trip` (its `ToPlace`/`FromPlace` are free-text labels resolved to a\na LupiraGeoApi place, like `Location`). A presence/availability segment is authored via the request's top-level\n`Availability` field, not here. On update, a supplied member replaces that member wholesale; omitted members are kept."
+      },
+      "ItemDraftDto": {
+        "required": [
+          "sourceKey",
+          "isAllDay"
+        ],
+        "type": "object",
+        "properties": {
+          "sourceKey": {
+            "type": "string",
+            "description": "Your key for this event of the file; create with it as `SourceKey` so re-reading the same file creates nothing new."
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ItemStatus"
+              }
+            ]
+          },
+          "category": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ItemCategory"
+              }
+            ]
+          },
+          "isAllDay": {
+            "type": "boolean"
+          },
+          "startsAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "startDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "endDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "startTimezone": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "IANA zone of a timed item when the file names one."
+          },
+          "recurrenceRule": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "location": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Free-text place label; resolve it to a place before creating the item."
+          }
+        },
+        "description": "An unsaved item read from a calendar file. Field names match CreateCalendarItemRequest."
       },
       "ItemPrompt": {
         "required": [
@@ -5171,6 +5926,22 @@
           "Confirmed",
           "Cancelled"
         ]
+      },
+      "ItemSyncChange": {
+        "required": [
+          "item",
+          "guards"
+        ],
+        "type": "object",
+        "properties": {
+          "item": {
+            "$ref": "#/components/schemas/CalendarItemDto"
+          },
+          "guards": {
+            "$ref": "#/components/schemas/SectionGuardsDto"
+          }
+        },
+        "description": "A changed item: the full DTO plus its section guards."
       },
       "JsonObject": {
         "type": "object"
@@ -5281,7 +6052,7 @@
             ]
           }
         },
-        "description": "A change to one occurrence of a recurring item, identified by the start it would have had unchanged\n            (DateTimeOffset OccurrenceOverride.OriginalStart, UTC; an all-day series uses the date at 00:00Z). Null members inherit from the series;\n            ItemStatus.Cancelled drops the occurrence."
+        "description": "A change to one occurrence of a recurring item, identified by the start it would have had unchanged\n            (DateTimeOffset OccurrenceOverride.OriginalStart, UTC; an all-day series uses the date at 00:00Z, and DateTimeOffset? OccurrenceOverride.EndsAt is then the inclusive\n            last day at 00:00Z). Null members inherit from the series; ItemStatus.Cancelled drops the occurrence."
       },
       "OriginKind": {
         "enum": [
@@ -5298,6 +6069,7 @@
           "Summary",
           "Question",
           "Relation",
+          "Place",
           "None"
         ],
         "description": "The ProposedAction kind a run is contracted to yield (assistant-api validates against it; cal-api only stores it)."
@@ -5337,6 +6109,26 @@
           }
         },
         "description": "The result of granting a member access to a container: who now has what access on which container."
+      },
+      "ParticipantReminderDto": {
+        "required": [
+          "mode",
+          "minutesBefore"
+        ],
+        "type": "object",
+        "properties": {
+          "mode": {
+            "$ref": "#/components/schemas/ReminderMode"
+          },
+          "minutesBefore": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "A participant's own reminder for an item; `MinutesBefore` is set only for `Before`."
       },
       "ParticipationRef": {
         "required": [
@@ -5430,6 +6222,89 @@
           }
         },
         "description": "The claims a caller's token resolved to, echoed for cross-service auth-seam probes.\n            Returning the audiences (not a bare 200) lets a failing consumer see which half of the seam\n            is misconfigured."
+      },
+      "PlaceCategoryUsageDto": {
+        "required": [
+          "category",
+          "eventCount",
+          "lastDay"
+        ],
+        "type": "object",
+        "properties": {
+          "category": {
+            "$ref": "#/components/schemas/ItemCategory"
+          },
+          "eventCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lastDay": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "PlaceCompanionDto": {
+        "required": [
+          "contactId",
+          "eventCount"
+        ],
+        "type": "object",
+        "properties": {
+          "contactId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "eventCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PlaceUsageDto": {
+        "required": [
+          "placeId",
+          "eventCount",
+          "lastDay",
+          "byCategory",
+          "companions"
+        ],
+        "type": "object",
+        "properties": {
+          "placeId": {
+            "type": "string",
+            "description": "The LupiraGeoApi place; a merged-away id reports its survivor.",
+            "format": "uuid"
+          },
+          "label": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "eventCount": {
+            "type": "integer",
+            "description": "Event occurrences here, recurrences expanded.",
+            "format": "int32"
+          },
+          "lastDay": {
+            "type": "string",
+            "format": "date"
+          },
+          "byCategory": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlaceCategoryUsageDto"
+            }
+          },
+          "companions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlaceCompanionDto"
+            }
+          }
+        },
+        "description": "How the caller's events have used one place: as their location or a travel endpoint."
       },
       "PresenceDetail": {
         "required": [
@@ -5559,13 +6434,14 @@
             ]
           }
         },
-        "description": "A reference the fired payload acts on. `Id` for Event/Contact/Task; `Url` for External."
+        "description": "A reference the fired payload acts on. `Id` for Event/Contact/Task/Place; `Url` for External."
       },
       "RefKind": {
         "enum": [
           "Event",
           "Contact",
           "Task",
+          "Place",
           "External"
         ],
         "description": "What a Ref points at."
@@ -5613,6 +6489,14 @@
           }
         }
       },
+      "ReminderMode": {
+        "enum": [
+          "Default",
+          "Off",
+          "Before"
+        ],
+        "description": "How a participant wants to be reminded of an item: the device's default, never, or a set lead time."
+      },
       "SectionGuardDto": {
         "required": [
           "ts",
@@ -5636,7 +6520,8 @@
           "core",
           "metadata",
           "payload",
-          "filing"
+          "filing",
+          "reminders"
         ],
         "type": "object",
         "properties": {
@@ -5654,9 +6539,41 @@
             "additionalProperties": {
               "$ref": "#/components/schemas/SectionGuardDto"
             }
+          },
+          "reminders": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/SectionGuardDto"
+            }
           }
         },
-        "description": "Per-section guards for an item: core fields, metadata, the XOR payload, and per-calendar filing."
+        "description": "Per-section guards for an item: core fields, metadata, the XOR payload, per-calendar filing, and\n            per-participation reminders (keyed by participation id, only those ever set)."
+      },
+      "SeriesSplitDto": {
+        "type": "object",
+        "properties": {
+          "earlier": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/CalendarItemDto"
+              }
+            ]
+          },
+          "following": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/CalendarItemDto"
+              }
+            ]
+          }
+        },
+        "description": "The outcome of changing following occurrences: the series up to them (null when none is left) and the series\n            that continues from them (null when they were deleted)."
       },
       "SetItemActionRequest": {
         "required": [
@@ -5780,10 +6697,13 @@
             }
           },
           "attended": {
-            "type": "boolean"
+            "type": [
+              "null",
+              "boolean"
+            ]
           }
         },
-        "description": "Add a set of contacts as attendees of an item in one call (add-only — does not remove existing attendees).\n            `Attended` also marks them attended (for historical/backfilled events); pass false for a live invite flow."
+        "description": "Add a set of contacts as attendees of an item in one call (add-only — does not remove existing attendees).\n            `Attended`: omitted marks them attended only when the item has already ended (stamped at its end); true always\n            marks them attended; false never does."
       },
       "SetParticipantsResult": {
         "required": [
@@ -5810,23 +6730,7 @@
         },
         "description": "Slim result of `set_participants` — the additions and how many were already present. Deliberately not the\n            full item DTO (which would echo the whole, growing attendee list on every call)."
       },
-      "SyncChangeDto": {
-        "required": [
-          "item",
-          "guards"
-        ],
-        "type": "object",
-        "properties": {
-          "item": {
-            "$ref": "#/components/schemas/CalendarItemDto"
-          },
-          "guards": {
-            "$ref": "#/components/schemas/SectionGuardsDto"
-          }
-        },
-        "description": "A changed item: the full DTO plus its section guards."
-      },
-      "SyncChangesResponse": {
+      "SyncPageOfContainerDto": {
         "required": [
           "cursor",
           "hasMore",
@@ -5843,13 +6747,12 @@
             "type": "boolean"
           },
           "reset": {
-            "type": "boolean",
-            "description": "Stream restarted from zero (no `since`, or readable calendars changed): a full sync from here."
+            "type": "boolean"
           },
           "changed": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/SyncChangeDto"
+              "$ref": "#/components/schemas/ContainerDto"
             }
           },
           "deleted": {
@@ -5857,11 +6760,45 @@
             "items": {
               "type": "string",
               "format": "uuid"
-            },
-            "description": "Ids filed to a readable calendar but no longer visible (deleted, or no accepted membership). Unknown\n            ids are safe to ignore."
+            }
           }
         },
-        "description": "One page of the changes feed. `Cursor` is opaque — hand it back as `?since=`; loop while\n            `HasMore`. A full sync (no `since`, or a `Reset`) streams every live visible item and suppresses\n            tombstones — the client replaces its mirror wholesale and rebases pending work."
+        "description": "One page of a `/sync/*` feed. `reset` starts a full sync: rows the full sync never mentions are gone."
+      },
+      "SyncPageOfItemSyncChange": {
+        "required": [
+          "cursor",
+          "hasMore",
+          "reset",
+          "changed",
+          "deleted"
+        ],
+        "type": "object",
+        "properties": {
+          "cursor": {
+            "type": "string"
+          },
+          "hasMore": {
+            "type": "boolean"
+          },
+          "reset": {
+            "type": "boolean"
+          },
+          "changed": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItemSyncChange"
+            }
+          },
+          "deleted": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        },
+        "description": "One page of a `/sync/*` feed. `reset` starts a full sync: rows the full sync never mentions are gone."
       },
       "TransportMode": {
         "enum": [
@@ -6097,11 +7034,15 @@
               "null",
               "string"
             ],
-            "description": "Re-anchor the location to a resolved LupiraGeoApi place; string? UpdateCalendarItemRequest.Location then carries the display\n            label. Set bool UpdateCalendarItemRequest.PlaceIdProvided with a null value to clear. Free-text-only location changes are rejected\n            (resolve via geo first); an id geo doesn't know is rejected, a merged-away id is stored as its survivor.",
+            "description": "Re-anchor the location to a resolved LupiraGeoApi place; string? UpdateCalendarItemRequest.Location then carries the display\n            label. Set bool UpdateCalendarItemRequest.PlaceIdProvided with a null value to clear the place; its label goes too unless\n            string? UpdateCalendarItemRequest.Location re-sends it. A changed label without a place is rejected unless\n            bool UpdateCalendarItemRequest.LocationUnresolved is set; an id geo doesn't know is rejected, a merged-away id is stored as its survivor.",
             "format": "uuid"
           },
           "placeIdProvided": {
             "type": "boolean"
+          },
+          "locationUnresolved": {
+            "type": "boolean",
+            "description": "Store string? UpdateCalendarItemRequest.Location verbatim as a label with no place (null clears it); geo is not called.\n            Cannot be combined with Guid? UpdateCalendarItemRequest.PlaceId."
           },
           "startsAt": {
             "type": [
@@ -6288,6 +7229,9 @@
     },
     {
       "name": "Me"
+    },
+    {
+      "name": "Places"
     },
     {
       "name": "Participation"

@@ -16,7 +16,7 @@ import { useGeoPlace } from '../../state/usePlaces';
 import { CategoryIcon } from './CategoryIcon';
 
 /** The ?item= card: what an event on the map is, read-only. Editing is the calendar's. */
-export function EventCard({ itemId, onClose }: { itemId: string; onClose: () => void }) {
+export function EventCard({ itemId, occurrence, onClose }: { itemId: string; occurrence?: string; onClose: () => void }) {
   const { data: item, isLoading } = useItem(itemId);
   const { calendars } = useContainers();
   const { data: place } = useGeoPlace(item?.placeId ?? undefined);
@@ -49,7 +49,7 @@ export function EventCard({ itemId, onClose }: { itemId: string; onClose: () => 
       )}
       <DialogActions>
         <Button onClick={onClose}>Close</Button>
-        <Button variant="contained" component="a" href={links.calItemUrl(itemId)}>Open in calendar</Button>
+        <Button variant="contained" component="a" href={links.calItemUrl(itemId, occurrence)}>Open in calendar</Button>
       </DialogActions>
     </Dialog>
   );

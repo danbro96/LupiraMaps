@@ -5,6 +5,7 @@ import {
   contactPinLabel,
   eventFeatures,
   hotspotFeatures,
+  occurrenceKey,
   photoCellBounds,
   photoFeatures,
   savedPlaceFeatures,
@@ -35,6 +36,18 @@ describe('eventFeatures', () => {
     expect(features.features).toHaveLength(2);
   });
 
+  it('carries the occurrence the pin shows, keyed as the calendar addresses it', () => {
+    const { features } = eventFeatures(
+      [
+        { itemId: 'series', start: '2026-01-01T10:00:00+01:00', originalStart: '2026-01-01T09:00:00+00:00', placeId: 'home' },
+        { itemId: 'once', start: '2026-01-02T09:00:00Z', originalStart: null, placeId: 'work' },
+      ],
+      places,
+    );
+    expect(props(features, 0).occurrence).toBe('2026-01-01T09:00:00Z');
+    expect(props(features, 1).occurrence).toBeNull();
+  });
+
   it('counts a free-text location as unmappable, but never an unresolved placeId', () => {
     const labelOnly = eventFeatures(
       [{ itemId: 'i1', start: 's', placeId: null, hasLocationLabel: true }],
@@ -60,6 +73,15 @@ describe('eventFeatures', () => {
     const { features } = eventFeatures([{ itemId: 'i1', start: 's', placeId: 'home' }], places);
     expect(props(features).title).toBe('Home');
     expect(props(features).calendarId).toBeNull();
+  });
+});
+
+describe('occurrenceKey', () => {
+  it('is the unmodified start in UTC to the second', () => {
+    expect(occurrenceKey('2026-03-29T03:00:00+02:00')).toBe('2026-03-29T01:00:00Z');
+    expect(occurrenceKey('2026-12-24T00:00:00.000Z')).toBe('2026-12-24T00:00:00Z');
+    expect(occurrenceKey(null)).toBeNull();
+    expect(occurrenceKey('not a date')).toBeNull();
   });
 });
 

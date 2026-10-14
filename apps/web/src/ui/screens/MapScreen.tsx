@@ -59,7 +59,7 @@ import { EventIcon, FamilyIcon, FilterIcon, HomeIcon, WorkIcon } from '@danbro96
 
 const QUICK_PLACE_ICONS = { home: HomeIcon, work: WorkIcon, parents: FamilyIcon, event: EventIcon } as const;
 
-const SELECTION_KEYS = ['place', 'item', 'at'];
+const SELECTION_KEYS = ['place', 'item', 'occ', 'at'];
 const LAYERS_PREF = 'map.layers';
 const RANGE_PREF = 'map.range';
 const DEFAULT_ACTIVE = LAYER_KEYS.filter((k) => DEFAULT_LAYERS[k]);
@@ -89,11 +89,12 @@ export default function MapScreen() {
 
   // One selection at a time: each flies the map on load, so leaving an older one in the URL makes a
   // reload return to it instead of to what was picked last.
-  const select = (key: 'place' | 'item', value: string | undefined) =>
+  const select = (key: 'place' | 'item', value: string | undefined, occurrence?: string | null) =>
     setParams((prev) => {
       const next = new URLSearchParams(prev);
       for (const k of SELECTION_KEYS) next.delete(k);
       if (value) next.set(key, value);
+      if (value && occurrence) next.set('occ', occurrence);
       return next;
     }, { replace: true });
 
@@ -180,7 +181,7 @@ export default function MapScreen() {
     }
     if (action !== 'open') return;
     setHits(undefined);
-    if (hit.kind === 'event') select('item', hit.itemId);
+    if (hit.kind === 'event') select('item', hit.itemId, hit.occurrence);
     else if (hit.kind === 'contact') window.location.assign(links.calContactUrl(hit.contactId));
     else if (hit.kind === 'photo') window.location.assign(links.photosPhotoUrl(hit.photoId));
   };
@@ -265,7 +266,7 @@ export default function MapScreen() {
         onClick: () => {
           const [lon, lat] = (f.geometry as GeoJSON.Point).coordinates;
           setFlyTarget({ center: [lon, lat] });
-          select('item', p.itemId as string);
+          select('item', p.itemId as string, p.occurrence as string | null);
         },
       };
     });

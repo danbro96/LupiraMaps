@@ -51,6 +51,7 @@ export function useEventFeatures(from: string, to: string, enabled: boolean): Ev
       itemId: occurrence.id,
       title: occurrence.title,
       start: occurrence.start,
+      originalStart: occurrence.originalStart,
       calendarId,
       color,
       placeId: occurrence.placeId,

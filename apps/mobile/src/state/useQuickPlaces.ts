@@ -34,6 +34,7 @@ export function useQuickPlaces(nowIso: string): QuickPlace[] {
       itemId: o.id,
       title: o.title ?? null,
       start: o.start,
+      originalStart: o.originalStart,
       placeId: o.placeId!,
       color: calendars?.find((cal) => o.calendarIds.includes(cal.id))?.color ?? null,
     })),

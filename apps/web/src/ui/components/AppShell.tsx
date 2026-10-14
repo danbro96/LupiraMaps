@@ -25,11 +25,13 @@ const NAV_LINK_SX = {
 export function AppShell() {
   const [searchParams, setSearchParams] = useSearchParams();
   const itemId = searchParams.get('item');
+  const occurrence = searchParams.get('occ') ?? undefined;
 
   const closeItem = () =>
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
       next.delete('item');
+      next.delete('occ');
       return next;
     });
 
@@ -69,7 +71,7 @@ export function AppShell() {
         </Box>
         <BottomNav />
       </Box>
-      {itemId && <EventCard itemId={itemId} onClose={closeItem} />}
+      {itemId && <EventCard itemId={itemId} occurrence={occurrence} onClose={closeItem} />}
     </>
   );
 }

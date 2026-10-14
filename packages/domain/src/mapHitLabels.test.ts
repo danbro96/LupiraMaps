@@ -13,7 +13,7 @@ describe('describeHit', () => {
   });
 
   it('falls back to readable titles', () => {
-    expect(describeHit({ kind: 'event', key: 'e', point, itemId: 'i', title: null, start: null, color: null }).title).toBe('(untitled)');
+    expect(describeHit({ kind: 'event', key: 'e', point, itemId: 'i', title: null, start: null, occurrence: null, color: null }).title).toBe('(untitled)');
     expect(describeHit({ kind: 'photoCell', key: 'c', point, count: 12, bounds: [0, 0, 1, 1] }).title).toBe('12 photos');
   });
 });

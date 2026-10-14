@@ -265,7 +265,7 @@ export function MapScreen() {
     if (action !== 'open') return;
     // The pin stays: coming back to the map, what you opened is still marked.
     setHits(null);
-    if (hit.kind === 'event') void openSibling((l) => l.calItemUrl(hit.itemId));
+    if (hit.kind === 'event') void openSibling((l) => l.calItemUrl(hit.itemId, hit.occurrence ?? undefined));
     else if (hit.kind === 'contact') void openSibling((l) => l.calContactUrl(hit.contactId));
     else if (hit.kind === 'photo') void openSibling((l) => l.photosPhotoUrl(hit.photoId));
   };

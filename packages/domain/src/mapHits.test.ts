@@ -34,6 +34,14 @@ describe('hitsFromFeatures', () => {
     expect(hits[1]).toMatchObject({ count: 12, bounds: [18, 59, 18.1, 59.4] });
   });
 
+  it('keeps the occurrence an event pin shows', () => {
+    const hits = hitsFromFeatures([
+      at({ layer: 'event', itemId: 'series', occurrence: '2026-09-02T15:00:00Z' }),
+      at({ layer: 'event', itemId: 'once', occurrence: null }, 18.1),
+    ]);
+    expect(hits.map((h) => (h.kind === 'event' ? h.occurrence : undefined))).toEqual(['2026-09-02T15:00:00Z', null]);
+  });
+
   it("reads the history layer's former and future residents with their period, and a device's last fix", () => {
     const hits = hitsFromFeatures([
       at({ layer: 'contact-former', status: 'former', placeId: 'pl', contactIds: ['bo'], names: ['Bo'], periods: ['2010–2015'] }),

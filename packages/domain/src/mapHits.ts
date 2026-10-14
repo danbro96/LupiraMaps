@@ -12,7 +12,10 @@ export interface HitPoint {
 }
 
 export type MapHit =
-  | { kind: 'event'; key: string; point: HitPoint; itemId: string; title: string | null; start: string | null; color: string | null }
+  | {
+      kind: 'event'; key: string; point: HitPoint; itemId: string; title: string | null; start: string | null; occurrence: string | null;
+      color: string | null;
+    }
   | {
       kind: 'contact'; key: string; point: HitPoint; contactId: string; name: string; placeId: string | null; placeName: string | null;
       addressType: string | null;
@@ -61,7 +64,12 @@ export function hitsFromFeatures(features: readonly Feature[]): MapHit[] {
     switch (p.layer) {
       case 'event': {
         const itemId = str(p.itemId);
-        if (itemId) hits.push({ kind: 'event', key: `event:${itemId}`, point, itemId, title: str(p.title), start: str(p.start), color: str(p.color) });
+        if (itemId) {
+          hits.push({
+            kind: 'event', key: `event:${itemId}`, point, itemId, title: str(p.title), start: str(p.start), occurrence: str(p.occurrence),
+            color: str(p.color),
+          });
+        }
         break;
       }
       case 'contact':

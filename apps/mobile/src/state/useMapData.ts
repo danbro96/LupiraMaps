@@ -53,6 +53,7 @@ export function useEventFeatures(fromDay: string, toDay: string, enabled: boolea
           itemId: o.id,
           title: o.title,
           start: o.start,
+          originalStart: o.originalStart,
           calendarId,
           color: (calendarId ? colorByCalendar.get(calendarId) : null) ?? null,
           placeId: o.placeId,

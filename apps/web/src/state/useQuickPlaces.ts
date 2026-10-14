@@ -31,7 +31,10 @@ export function useQuickPlaces(nowIso: string): QuickPlace[] {
     places,
     upcoming: upcoming.map((o) => {
       const calendar = calendars.find((c) => o.calendarIds.includes(c.id));
-      return { itemId: o.id, title: o.title ?? null, start: o.start, placeId: o.placeId!, color: calendar ? calendarColor(calendar) : null };
+      return {
+        itemId: o.id, title: o.title ?? null, start: o.start, originalStart: o.originalStart, placeId: o.placeId!,
+        color: calendar ? calendarColor(calendar) : null,
+      };
     }),
   });
 }
