@@ -2,7 +2,7 @@
   "expo": {
     "name": "Lupira Maps",
     "slug": "lupira-maps",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "scheme": "lupiramaps",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
@@ -68,6 +68,14 @@
           "imageWidth": 180,
           "resizeMode": "contain",
           "backgroundColor": "#0F172A"
+        }
+      ],
+      [
+        "@sentry/react-native/expo",
+        {
+          "url": "https://de.sentry.io/",
+          "project": "lupira-maps",
+          "organization": "brostrom"
         }
       ]
     ],
