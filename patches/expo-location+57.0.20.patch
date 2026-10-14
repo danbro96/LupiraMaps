@@ -1,0 +1,17 @@
+diff --git a/node_modules/expo-location/android/src/main/java/expo/modules/location/records/LocationArguments.kt b/node_modules/expo-location/android/src/main/java/expo/modules/location/records/LocationArguments.kt
+--- a/node_modules/expo-location/android/src/main/java/expo/modules/location/records/LocationArguments.kt
++++ b/node_modules/expo-location/android/src/main/java/expo/modules/location/records/LocationArguments.kt
+@@ -43,10 +43,10 @@
+   @Field var timeInterval: Long? = null
+ ) : Record, Serializable {
+   constructor(map: Map<String, Any?>) : this(
+-    accuracy = map["accuracy"] as? Int ?: ACCURACY_BALANCED,
+-    distanceInterval = map["distanceInterval"] as? Int?,
++    accuracy = (map["accuracy"] as? Number)?.toInt() ?: ACCURACY_BALANCED,
++    distanceInterval = (map["distanceInterval"] as? Number)?.toInt(),
+     mayShowUserSettingsDialog = map["mayShowUserSettingsDialog"] as? Boolean? ?: true,
+-    timeInterval = map["timeInterval"] as? Long
++    timeInterval = (map["timeInterval"] as? Number)?.toLong()
+   )
+ }
+ 
