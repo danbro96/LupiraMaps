@@ -75,7 +75,8 @@
         {
           "url": "https://de.sentry.io/",
           "project": "lupira-maps",
-          "organization": "brostrom"
+          "organization": "brostrom",
+          "experimental_android": { "enableAndroidGradlePlugin": true }
         }
       ]
     ],
