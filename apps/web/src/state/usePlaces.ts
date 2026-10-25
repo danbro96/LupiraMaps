@@ -20,9 +20,11 @@ export function usePlaceItems(placeId: string | undefined) {
 
 /** The catalog place at a pin: one within the dedupe radius, else a new one (auto-named when `name` is omitted). */
 export function usePlaceFromPin() {
+  const invalidate = useInvalidatePlaces();
   return useMutation({
     mutationFn: ({ name, lat, lon }: { name?: string | null; lat: number; lon: number }) =>
       createPlaceFromPin({ name, latitude: lat, longitude: lon }),
+    onSuccess: () => invalidate(),
   });
 }
 

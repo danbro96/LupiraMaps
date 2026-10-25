@@ -27,6 +27,7 @@ import { ymd } from '@danbro96/lupira-domain-core/time';
 import type { MapTheme } from '@danbro96/lupira-tokens-map/map';
 import { fallbackStyle } from '../../data/mapStyle';
 import { toastError } from '@danbro96/lupira-expo-feedback/toast';
+import { detach } from '@danbro96/lupira-expo-diagnostics/log';
 import { Screen } from '@danbro96/lupira-expo-paper/components/Screen';
 import { StatusBanner } from '@danbro96/lupira-expo-paper/components/StatusBanner';
 import { offlineBannerState } from '@danbro96/lupira-expo-paper/status';
@@ -47,7 +48,6 @@ import { SavePlaceSheet } from '../map/SavePlaceSheet';
 import {
   ContactsLayer, EventsLayer, HotspotsLayer, LivePuck, MovementLayer, PhotosLayer, SavedPlacesLayer, SelectionPin,
 } from '../map/layers';
-import { useMapAuthHeader } from '../map/useMapAuthHeader';
 import type { MapTarget, RootStackParamList } from '../navigation/types';
 import { ICONS } from '../icons';
 import { openSibling } from '../siblingLinks';
@@ -75,7 +75,6 @@ export function MapScreen() {
   const scheme = useColorScheme();
   const theme: MapTheme = scheme === 'dark' ? 'dark' : 'light';
 
-  useMapAuthHeader();
   const online = useOnline();
 
   const { style, degraded } = useMapStyle(theme);
@@ -149,7 +148,7 @@ export function MapScreen() {
   // GPS stops when you leave the map. Focus, not mount: the map stays mounted under Settings.
   useFocusEffect(() => {
     setNow(minuteNow());
-    void useLivePosition.getState().start();
+    detach(useLivePosition.getState().start(), 'location');
     return () => useLivePosition.getState().stop();
   });
 
@@ -250,7 +249,7 @@ export function MapScreen() {
     if (action === 'day' && (hit.kind === 'photo' || hit.kind === 'visit')) {
       const day = ymd(new Date(hit.kind === 'photo' ? hit.takenAt : hit.arriveTs));
       closePreview();
-      void openSibling((l) => l.photosRangeUrl({ from: day, to: day }));
+      openSibling((l) => l.photosRangeUrl({ from: day, to: day }));
       return;
     }
     if (action === 'place') {
@@ -265,9 +264,9 @@ export function MapScreen() {
     if (action !== 'open') return;
     // The pin stays: coming back to the map, what you opened is still marked.
     setHits(null);
-    if (hit.kind === 'event') void openSibling((l) => l.calItemUrl(hit.itemId, hit.occurrence ?? undefined));
-    else if (hit.kind === 'contact') void openSibling((l) => l.calContactUrl(hit.contactId));
-    else if (hit.kind === 'photo') void openSibling((l) => l.photosPhotoUrl(hit.photoId));
+    if (hit.kind === 'event') openSibling((l) => l.calItemUrl(hit.itemId, hit.occurrence ?? undefined));
+    else if (hit.kind === 'contact') openSibling((l) => l.calContactUrl(hit.contactId));
+    else if (hit.kind === 'photo') openSibling((l) => l.photosPhotoUrl(hit.photoId));
   };
 
   const onLocatePress = async () => {
@@ -289,9 +288,11 @@ export function MapScreen() {
 
   const toggle = (key: LayerKey) => {
     if (key === 'photos') setPhotosForced(false);
-    void usePrefs.getState().setMapLayers({ ...layerPrefs, [key]: !enabled[key] });
+    usePrefs.getState().setMapLayers({ ...layerPrefs, [key]: !enabled[key] }).catch(() => toastError("Couldn't save the layer choice"));
   };
-  const setSince = (value: MapSince) => void usePrefs.getState().setMapSince(value);
+  const setSince = (value: MapSince) => {
+    usePrefs.getState().setMapSince(value).catch(() => toastError("Couldn't save the time range"));
+  };
   const mapStyle = style ?? (degraded ? fallbackStyle(theme) : undefined);
 
   return (
@@ -308,7 +309,9 @@ export function MapScreen() {
             mapStyle={mapStyle as unknown as StyleSpecification}
             onRegionDidChange={onRegionDidChange}
             onDidFinishLoadingMap={onMapLoaded}
-            onPress={(e) => void onMapPress(e)}
+            onPress={(e) => {
+              onMapPress(e).catch(() => toastError("Couldn't read what's here"));
+            }}
             onLongPress={onMapLongPress}
           >
             <Camera ref={cameraRef} initialViewState={initialView} />
@@ -326,7 +329,9 @@ export function MapScreen() {
           </MapView>
 
           <LayersFab onPress={() => setSheetOpen(true)} style={[styles.layersFab, { bottom: insets.bottom + 88 }]} />
-          <LocateFab mode={follow} onPress={() => void onLocatePress()} style={[styles.locateFab, { bottom: insets.bottom + 24 }]} />
+          <LocateFab mode={follow} onPress={() => {
+            onLocatePress().catch(() => toastError("Couldn't find your location"));
+          }} style={[styles.locateFab, { bottom: insets.bottom + 24 }]} />
         </View>
       ) : (
         <View style={styles.loading}>

@@ -11,7 +11,7 @@ import {
   isTimestampAcceptable, nextCadence, shouldUploadAfterRecord, type MotionActivity,
 } from '../domain/locationFix';
 import { batteryPct } from '../data/battery';
-import { logDebug } from '@danbro96/lupira-expo-diagnostics/log';
+import { detach, logDebug } from '@danbro96/lupira-expo-diagnostics/log';
 import { runLocationUpload } from './locationUploader';
 import { useTrackingStatus } from './locationTrackingStatus';
 
@@ -107,7 +107,7 @@ async function recordFixes(locations: Location.LocationObject[]): Promise<void> 
 
   await useTrackingStatus.getState().refresh(db);
   await applyCadence(observed);
-  if (shouldUploadAfterRecord(recorded.queued, recorded.lastUploadMs, Date.now())) void runLocationUpload(db);
+  if (shouldUploadAfterRecord(recorded.queued, recorded.lastUploadMs, Date.now())) detach(runLocationUpload(db), 'location');
 }
 
 /** Restarts OS updates when the activity class has genuinely changed. */

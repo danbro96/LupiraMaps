@@ -11,6 +11,7 @@ import { purgeLocationHistory } from '@lupira/maps-api/fetch/location';
 import { isRecording, startRecording, stopRecording } from '../sync/locationRecorder';
 import { reconcileCursor, runLocationUpload } from '../sync/locationUploader';
 import { useTrackingStatus } from '../sync/locationTrackingStatus';
+import { detach } from '@danbro96/lupira-expo-diagnostics/log';
 
 /** The UI-facing tracking control. Settings persist in the meta table (the recorder reads them from the
  *  data layer); live counters live in sync/locationTrackingStatus. This store owns the parts that
@@ -108,7 +109,7 @@ export const useLocationTracking = create<TrackingState & TrackingActions>((set,
     await saveTrackingSettings(db, settings);
     set({ settings });
     // Whatever is already queued still belongs on the server — drain it rather than dropping it.
-    void runLocationUpload(db);
+    detach(runLocationUpload(db), 'location');
   },
 
   setPaused: async (paused) => {
@@ -148,7 +149,7 @@ export const useLocationTracking = create<TrackingState & TrackingActions>((set,
       return;
     }
     await startRecording();
-    void runLocationUpload();
+    detach(runLocationUpload(), 'location');
   },
 
   eraseHistory: async () => {

@@ -4,6 +4,7 @@ import { toast, toastError } from '@danbro96/lupira-expo-feedback/toast';
 import { useLocationTracking } from '../../state/location-tracking-store';
 import { useTrackingStatus } from '../../sync/locationTrackingStatus';
 import { runLocationUpload } from '../../sync/locationUploader';
+import { detach } from '@danbro96/lupira-expo-diagnostics/log';
 import { useConfirm } from '@danbro96/lupira-expo-paper/components/ConfirmDialog';
 import { SettingsAction } from '@danbro96/lupira-expo-paper/components/SettingsAction';
 import { SettingsNote } from '@danbro96/lupira-expo-paper/components/SettingsNote';
@@ -16,37 +17,36 @@ export function LocationSettingsScreen() {
 
   const toggle = (value: boolean) => {
     if (!value) {
-      void useLocationTracking.getState().disable();
+      useLocationTracking.getState().disable().catch(() => toastError('Could not turn recording off.'));
       return;
     }
-    void useLocationTracking.getState().enable('This phone').then(async (outcome) => {
+    useLocationTracking.getState().enable('This phone').then(async (outcome) => {
       if (outcome === 'denied') {
         const open = await confirm({
           title: 'Location permission needed',
           message: 'Recording your route needs access to this device’s location. Grant it in the system settings and try again.',
           confirmLabel: 'Open app settings',
         });
-        if (open) void Linking.openSettings();
+        if (open) Linking.openSettings().catch(() => toastError('Could not open the system settings.'));
         return;
       }
       if (outcome === 'foreground-only') {
         toast('Recording only while the app is open — choose “Allow all the time” for a gap-free history.');
       }
-    });
+    }).catch(() => toastError('Could not turn recording on.'));
   };
 
   const confirmErase = () => {
-    void confirm({
+    confirm({
       title: 'Erase location history',
       message: 'Deletes every recorded position on the server, plus the visits and trips derived from them. This cannot be undone.',
       confirmLabel: 'Erase',
       destructive: true,
-    }).then((ok) => {
+    }).then(async (ok) => {
       if (!ok) return;
-      void useLocationTracking.getState().eraseHistory()
-        .then(() => toast('Location history erased.'))
-        .catch(() => toastError('Could not erase location history.'));
-    });
+      await useLocationTracking.getState().eraseHistory();
+      toast('Location history erased.');
+    }).catch(() => toastError('Could not erase location history.'));
   };
 
   return (
@@ -60,7 +60,12 @@ export function LocationSettingsScreen() {
           <List.Item
             title="Pause recording"
             right={() => (
-              <Switch value={tracking.settings.paused} onValueChange={(v) => void useLocationTracking.getState().setPaused(v)} />
+              <Switch
+                value={tracking.settings.paused}
+                onValueChange={(v) => {
+                  useLocationTracking.getState().setPaused(v).catch(() => toastError(v ? 'Could not pause recording.' : 'Could not resume recording.'));
+                }}
+              />
             )}
           />
           <SettingsNote>
@@ -73,12 +78,14 @@ export function LocationSettingsScreen() {
                   : 'Up to date'}
           </SettingsNote>
           {!tracking.backgroundGranted && (
-            <SettingsAction onPress={() => void Linking.openSettings()}>
+            <SettingsAction onPress={() => {
+              Linking.openSettings().catch(() => toastError('Could not open the system settings.'));
+            }}>
               Recording stops when the app closes — tap to choose “Allow all the time”
             </SettingsAction>
           )}
           {status.lastError && (
-            <SettingsAction onPress={() => void runLocationUpload()}>{status.lastError} — tap to retry</SettingsAction>
+            <SettingsAction onPress={() => detach(runLocationUpload(), 'location')}>{status.lastError} — tap to retry</SettingsAction>
           )}
           <SettingsAction tone="danger" onPress={confirmErase}>Erase my location history</SettingsAction>
         </>

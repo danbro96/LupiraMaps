@@ -56,6 +56,7 @@ import {
 } from '../components/map/layers';
 import { FitToData, FlyToPlace, ViewportReporter } from '../components/map/mapEffects';
 import { EventIcon, FamilyIcon, FilterIcon, HomeIcon, WorkIcon } from '@danbro96/lupira-web-mui/icons';
+import { useSnackbar } from '@danbro96/lupira-web-mui/SnackbarHost';
 
 const QUICK_PLACE_ICONS = { home: HomeIcon, work: WorkIcon, parents: FamilyIcon, event: EventIcon } as const;
 
@@ -439,6 +440,7 @@ function QuickPlacesBar({ places, onPick }: { places: QuickPlace[]; onPick: (p: 
  *  cell zooms to its photos. */
 function MapClicks({ onHits }: { onHits: (hits: MapHit[]) => void }) {
   const map = useMap();
+  const showSnack = useSnackbar();
   useEffect(() => {
     const onClick = async (e: MapMouseEvent) => {
       const { x, y } = e.point;
@@ -473,10 +475,12 @@ function MapClicks({ onHits }: { onHits: (hits: MapHit[]) => void }) {
       }
       onHits(hits);
     };
-    const handler = (e: MapMouseEvent) => void onClick(e);
+    const handler = (e: MapMouseEvent) => {
+      onClick(e).catch(() => showSnack("Couldn't read what's here."));
+    };
     map.on('click', handler);
     return () => { map.off('click', handler); };
-  }, [map, onHits]);
+  }, [map, onHits, showSnack]);
   return null;
 }
 

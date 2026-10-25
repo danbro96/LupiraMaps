@@ -57,7 +57,7 @@ export function MapCanvas({ children, center, zoom }: { children?: ReactNode; ce
       created.once('load', () => { if (!disposed) created?.resize(); });
       if (import.meta.env.DEV) (window as unknown as { __map?: MapLibreMap }).__map = created;
       setMap(created);
-    })();
+    })().catch(reportError);
     return () => {
       disposed = true;
       created?.remove();
@@ -77,7 +77,7 @@ export function MapCanvas({ children, center, zoom }: { children?: ReactNode; ce
       } catch {
         if (!stale) map.setStyle(fallbackStyle(theme, GEO_API_BASE_URL));
       }
-    })();
+    })().catch(reportError);
     return () => { stale = true; };
   }, [theme, map]);
 

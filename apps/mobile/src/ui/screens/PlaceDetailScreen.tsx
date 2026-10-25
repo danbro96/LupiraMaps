@@ -140,7 +140,9 @@ function SavedPlaceSection({ saved, onDeleted, onLinked }: {
             {!saved.placeId && (
               <Button title="Make it a place" variant="secondary" onPress={makePlace} disabled={!online} loading={link.isPending} />
             )}
-            <Button title="Remove saved place" variant="destructive" onPress={() => void onDelete()} disabled={!online} loading={remove.isPending} />
+            <Button title="Remove saved place" variant="destructive" onPress={() => {
+              onDelete().catch(() => toastError("Couldn't remove the place"));
+            }} disabled={!online} loading={remove.isPending} />
           </View>
         </>
       )}
@@ -222,7 +224,7 @@ function ItemsSection({ placeId }: { placeId: string }) {
             title={title}
             description={detail || undefined}
             left={(p) => <List.Icon {...p} icon={ICONS.event} />}
-            onPress={() => void openSibling((l) => l.calItemUrl(item.id))}
+            onPress={() => openSibling((l) => l.calItemUrl(item.id))}
           />
         );
       })}

@@ -35,17 +35,18 @@ export function runLocationUpload(dbOverride?: Db): Promise<void> {
 }
 
 async function drainOnce(dbOverride?: Db): Promise<void> {
-  const db = dbOverride ?? (await getDb());
-  const device = await loadDevice();
-  if (!device) return;
-
-  const settings = await loadTrackingSettings(db);
-  if (!settings.enabled) return;
-
   const status = useTrackingStatus.getState();
-  const now = Date.now();
 
   try {
+    const db = dbOverride ?? (await getDb());
+    const device = await loadDevice();
+    if (!device) return;
+
+    const settings = await loadTrackingSettings(db);
+    if (!settings.enabled) return;
+
+    const now = Date.now();
+
     // Housekeeping first: rows past the server's retention can never be accepted, and the queue needs
     // a ceiling regardless.
     await db.exclusive(async (tx) => {
@@ -145,10 +146,10 @@ export function classifyReceipt(sent: LocationFix[], receipt: IngestReceipt, now
 /** Aligns the local seq counter with the server after a reinstall (SecureStore kept the key, the
  *  queue did not) and drops anything the server already holds. Cheap enough to run at tracking start. */
 export async function reconcileCursor(dbOverride?: Db): Promise<void> {
-  const device = await loadDevice();
-  if (!device) return;
-  const db = dbOverride ?? (await getDb());
   try {
+    const device = await loadDevice();
+    if (!device) return;
+    const db = dbOverride ?? (await getDb());
     const cursor = await fetchCursor(await resolveApiUrl(), device.apiKey);
     if (cursor.lastSeq == null) return;
     await db.exclusive(async (tx) => {

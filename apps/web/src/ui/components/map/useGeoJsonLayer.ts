@@ -42,7 +42,7 @@ export function useGeoJsonLayer(
   }, [map, sourceId, layers]);
 
   useEffect(() => {
-    (map.getSource(sourceId) as GeoJSONSource | undefined)?.setData(data);
+    (map.getSource(sourceId) as GeoJSONSource | undefined)?.setData(data).catch(reportError);
   }, [map, sourceId, data]);
 
   const interactive = options?.interactive;

@@ -15,17 +15,23 @@ import { registerBackgroundUpload } from './src/sync/backgroundTask';
 import { persistOptions, queryClient } from './src/sync/queryClient';
 import { RootStack } from './src/ui/navigation/RootStack';
 import { linking } from './src/ui/navigation/linking';
-import { logDebug } from '@danbro96/lupira-expo-diagnostics/log';
+import { detach, logDebug } from '@danbro96/lupira-expo-diagnostics/log';
 import { useAutoUpdate } from '@danbro96/lupira-expo-diagnostics/useAutoUpdate';
 import { paperSettings } from '@danbro96/lupira-expo-paper/theme/paperSettings';
 import { SENTRY_DSN } from './src/config';
 import { initSentry } from '@danbro96/lupira-expo-diagnostics/initSentry';
 import { connectFocusManager } from '@danbro96/lupira-expo-query/focus';
 import { connectOnlineManager } from '@danbro96/lupira-expo-query/online';
+import { installMapAuthHeader } from '@danbro96/lupira-expo-maplibre/mapAuthHeader';
 
 initSentry(SENTRY_DSN);
 connectOnlineManager();
 connectFocusManager();
+installMapAuthHeader({
+  subscribeToken: (listener) => useAuth.subscribe(listener),
+  getToken: () => useAuth.getState().token,
+  apiUrl: () => useAuth.getState().apiUrl,
+});
 
 export default function App() {
   useAutoUpdate();
@@ -34,7 +40,8 @@ export default function App() {
   const authed = useAuth((s) => s.authMode === 'dev' || s.token !== null);
 
   useEffect(() => {
-    void useAuth.getState().load();
+    detach(useAuth.getState().load(), 'auth');
+    return useAuth.getState().startAutoRefresh();
   }, []);
 
   useEffect(() => {
@@ -44,16 +51,17 @@ export default function App() {
       queryClient.clear();
       return;
     }
-    void registerBackgroundUpload();
+    detach(registerBackgroundUpload(), 'location');
     usePrefs.getState().init().catch((e) => logDebug('app', `prefs init failed: ${String(e)}`));
     // Tracking self-repair lives here: it may need to RESTART the location foreground service, which
     // Android only permits from the foreground.
-    const reconcileTracking = () =>
+    const reconcileTracking = () => {
       useLocationTracking.getState().reconcile().catch((e) => logDebug('app', `tracking reconcile failed: ${String(e)}`));
+    };
     useLocationTracking.getState().init()
       .then(reconcileTracking, (e) => logDebug('app', `tracking init failed: ${String(e)}`));
     const appState = AppState.addEventListener('change', (next) => {
-      if (next === 'active') void reconcileTracking();
+      if (next === 'active') reconcileTracking();
     });
     return () => appState.remove();
   }, [loaded, authed]);

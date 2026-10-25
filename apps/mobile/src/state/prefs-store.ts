@@ -48,35 +48,37 @@ async function save(key: string, value: string): Promise<void> {
   await db.exclusive((tx) => setMeta(tx, key, value));
 }
 
-export const usePrefs = create<Prefs & PrefsActions>((set) => ({
-  loaded: false,
-  debugEnabled: false,
-  mapSince: 'month',
-  mapLayers: {},
+export const usePrefs = create<Prefs & PrefsActions>((set, get) => {
+  async function persist<K extends 'debugEnabled' | 'mapSince' | 'mapLayers'>(field: K, value: Prefs[K], key: string, raw: string) {
+    const previous = get()[field];
+    set({ [field]: value });
+    try {
+      await save(key, raw);
+    } catch (e) {
+      set({ [field]: previous });
+      throw e;
+    }
+  }
 
-  init: async () => {
-    const db = await getDb();
-    await migrate(db, MIGRATIONS);
-    set({
-      debugEnabled: (await getMeta(db, DEBUG_KEY)) === '1',
-      mapSince: await getMeta(db, MAP_SINCE_KEY).then((v) => (isMapSince(v) ? v : 'month')),
-      mapLayers: parseJson(await getMeta(db, MAP_LAYERS_KEY), isFlagRecord, {}),
-      loaded: true,
-    });
-  },
+  return {
+    loaded: false,
+    debugEnabled: false,
+    mapSince: 'month',
+    mapLayers: {},
 
-  setDebugEnabled: async (value) => {
-    set({ debugEnabled: value });
-    await save(DEBUG_KEY, value ? '1' : '0');
-  },
+    init: async () => {
+      const db = await getDb();
+      await migrate(db, MIGRATIONS);
+      set({
+        debugEnabled: (await getMeta(db, DEBUG_KEY)) === '1',
+        mapSince: await getMeta(db, MAP_SINCE_KEY).then((v) => (isMapSince(v) ? v : 'month')),
+        mapLayers: parseJson(await getMeta(db, MAP_LAYERS_KEY), isFlagRecord, {}),
+        loaded: true,
+      });
+    },
 
-  setMapSince: async (value) => {
-    set({ mapSince: value });
-    await save(MAP_SINCE_KEY, value);
-  },
-
-  setMapLayers: async (value) => {
-    set({ mapLayers: value });
-    await save(MAP_LAYERS_KEY, JSON.stringify(value));
-  },
-}));
+    setDebugEnabled: (value) => persist('debugEnabled', value, DEBUG_KEY, value ? '1' : '0'),
+    setMapSince: (value) => persist('mapSince', value, MAP_SINCE_KEY, value),
+    setMapLayers: (value) => persist('mapLayers', value, MAP_LAYERS_KEY, JSON.stringify(value)),
+  };
+});

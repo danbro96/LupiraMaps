@@ -9,6 +9,7 @@ import { useTrackingStatus } from '../../sync/locationTrackingStatus';
 import { IdentityHeader } from '@danbro96/lupira-expo-paper/components/IdentityHeader';
 import { SignOutButton } from '@danbro96/lupira-expo-paper/components/SignOutButton';
 import { VersionLine } from '@danbro96/lupira-expo-diagnostics/VersionLine';
+import { toastError } from '@danbro96/lupira-expo-feedback/toast';
 import { ICONS } from '../icons';
 import type { RootStackParamList } from '../navigation/types';
 import { useColors } from '../theme';
@@ -46,7 +47,9 @@ export function SettingsScreen() {
       />
 
       <List.Subheader>Account</List.Subheader>
-      {authMode !== 'dev' && <SignOutButton onSignOut={() => void useAuth.getState().clearSession()} />}
+      {authMode !== 'dev' && <SignOutButton onSignOut={() => {
+        useAuth.getState().clearSession().catch(() => toastError("Couldn't sign out"));
+      }} />}
 
       <List.Subheader>Location</List.Subheader>
       <List.Item
@@ -66,7 +69,9 @@ export function SettingsScreen() {
         right={() => (
           <Switch
             value={prefs.debugEnabled}
-            onValueChange={(v) => void usePrefs.getState().setDebugEnabled(v)}
+            onValueChange={(v) => {
+              usePrefs.getState().setDebugEnabled(v).catch(() => toastError("Couldn't save the setting"));
+            }}
             accessibilityLabel="Enable debug"
           />
         )}
