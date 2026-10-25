@@ -48,7 +48,7 @@ export function useLinkSavedToPlace() {
         await updateSavedPlace(saved.id, { placeId: place.placeId });
         return { placeId: place.placeId, savedPlaceId: saved.id };
       }
-      if (plan.notes !== null) await updateSavedPlace(plan.into.id, { notes: plan.notes });
+      if (plan.patch) await updateSavedPlace(plan.into.id, plan.patch);
       await deleteSavedPlace(saved.id);
       return { placeId: place.placeId, savedPlaceId: plan.into.id };
     },
