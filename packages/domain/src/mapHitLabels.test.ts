@@ -36,4 +36,10 @@ describe('hitActions', () => {
     expect(hitActions(pin, { placeScreen: true })).toEqual([]);
     expect(hitActions(pin, { savedPlaceScreen: true })).toEqual([{ action: 'place', label: 'Open place' }]);
   });
+
+  it('opens both linked and raw saved places with the web options', () => {
+    const web = { placeScreen: true, savedPlaceScreen: true };
+    expect(hitActions(saved, web)).toEqual([{ action: 'place', label: 'Open place' }]);
+    expect(hitActions({ ...saved, placeId: null }, web)).toEqual([{ action: 'place', label: 'Open place' }]);
+  });
 });
