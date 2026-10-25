@@ -13,6 +13,8 @@ import { useSnackbar } from '@danbro96/lupira-web-mui/SnackbarHost';
 import { WrapRow } from '../WrapRow';
 import { EntryCodes } from '../places/EntryCodes';
 
+const SCREENS = { placeScreen: true, savedPlaceScreen: true };
+
 /** What a click on the map found, as on the phone: one thing gets a card with its ways into a full screen;
  *  several — a contact's home with events and photos on it — get a list, a row opening its screen (or its
  *  card, for kinds without one). */
@@ -35,7 +37,7 @@ export function MapHitsCard({ hits, theme, onAction, onOpenPlace }: {
       {codes}
       {hits.map((hit) => {
         const { title, detail } = describeHit(hit);
-        const primary = hitActions(hit, { placeScreen: true })[0]?.action;
+        const primary = hitActions(hit, SCREENS)[0]?.action;
         return (
           <ButtonBase
             key={hit.key}
@@ -60,7 +62,7 @@ function HitDetail({ hit, onAction, onOpenPlace }: {
   onOpenPlace: (placeId: string) => void;
 }) {
   const { title, detail } = describeHit(hit);
-  const actions = hitActions(hit, { placeScreen: true });
+  const actions = hitActions(hit, SCREENS);
   return (
     <>
       {hit.kind === 'photo' && hit.thumbUrl && (

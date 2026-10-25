@@ -1,10 +1,11 @@
 import { useMutation } from '@tanstack/react-query';
 import { useGetItemsByPlace } from '@lupira/maps-api/query/cal';
 import {
-  createPlaceFromPin, useCreateSavedPlace, useDeleteSavedPlace, useGetPlace, useListSavedPlaces, useUpdatePlace,
-  useUpdateSavedPlace,
+  createPlaceFromPin, deleteSavedPlace, listSavedPlaces, updateSavedPlace, useCreateSavedPlace, useDeleteSavedPlace,
+  useGetPlace, useListSavedPlaces, useUpdatePlace, useUpdateSavedPlace,
 } from '@lupira/maps-api/query/geo';
-import { findSavedPlace } from '@lupira/maps-domain/savedPlaces';
+import type { SavedPlaceDto } from '@lupira/maps-api/models';
+import { findSavedPlace, linkPlan } from '@lupira/maps-domain/savedPlaces';
 import { useInvalidatePlaces } from './useInvalidate';
 
 /** A single gazetteer place with its containment chain (outermost→innermost). */
@@ -25,10 +26,32 @@ export function usePlaceFromPin() {
   });
 }
 
-/** The saved place labelling a gazetteer place, if any. */
-export function useSavedPlaceFor(placeId: string) {
-  const q = useListSavedPlaces();
-  return { saved: findSavedPlace(q.data ?? [], { placeId }), isLoading: q.isLoading };
+/** A saved place by its own id, else the one labelling a gazetteer place. */
+export function useSavedPlace(ids: { savedPlaceId?: string; placeId?: string }) {
+  const q = useListSavedPlaces({ query: { enabled: !!(ids.savedPlaceId || ids.placeId) } });
+  return { saved: findSavedPlace(q.data ?? [], ids), isLoading: q.isLoading };
+}
+
+/** A raw saved spot becomes a catalog place (matched within the dedupe radius, else created under its label);
+ *  `savedPlaceId` is the saved entry labelling it afterwards. */
+export function useLinkSavedToPlace() {
+  const invalidate = useInvalidatePlaces();
+  return useMutation({
+    mutationFn: async (saved: SavedPlaceDto): Promise<{ placeId: string; savedPlaceId: string }> => {
+      if (saved.latitude == null || saved.longitude == null) throw new Error('The saved place has no coordinates.');
+      const place = await createPlaceFromPin({ name: saved.label, latitude: saved.latitude, longitude: saved.longitude });
+      if (!place.placeId) throw new Error('No place resolved at the pin.');
+      const plan = linkPlan(await listSavedPlaces(), saved, place.placeId);
+      if (plan.kind === 'link') {
+        await updateSavedPlace(saved.id, { placeId: place.placeId });
+        return { placeId: place.placeId, savedPlaceId: saved.id };
+      }
+      if (plan.notes !== null) await updateSavedPlace(plan.into.id, { notes: plan.notes });
+      await deleteSavedPlace(saved.id);
+      return { placeId: place.placeId, savedPlaceId: plan.into.id };
+    },
+    onSuccess: () => invalidate(),
+  });
 }
 
 /** Place and saved-place writes; each refreshes every geo place query. `onError` gets the failure. */

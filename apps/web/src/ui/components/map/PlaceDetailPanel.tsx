@@ -16,7 +16,7 @@ import { addressMeta, residentsByPlace } from '@danbro96/lupira-domain-contacts/
 import { formatCoords, osmUrl } from '@danbro96/lupira-domain-places/places';
 import { useSnackbar } from '@danbro96/lupira-web-mui/SnackbarHost';
 import { links } from '../../../config/siblings';
-import { useGeoPlace, usePlaceEdits, usePlaceItems, useSavedPlaceFor } from '../../../state/usePlaces';
+import { useGeoPlace, useLinkSavedToPlace, usePlaceEdits, usePlaceItems, useSavedPlace } from '../../../state/usePlaces';
 import { useResidencyRows } from '../../../state/useResidencies';
 import { errText } from '../../errText';
 import { EntryCodes } from '../places/EntryCodes';
@@ -29,9 +29,19 @@ import { displayTitle } from '@danbro96/lupira-domain-events/itemLabels';
 import { Row, RowName } from '../Rows';
 import { EditIcon, PlaceIcon } from '@danbro96/lupira-web-mui/icons';
 
-/** The ?place= detail pane: the place (editable), your saved label for it, containment, items, contacts. */
-export function PlaceDetailPanel({ placeId, onClose }: { placeId: string; onClose: () => void }) {
-  const { data: place, isLoading } = useGeoPlace(placeId);
+/** The ?place= / ?saved= detail pane: the place (editable), your saved label for it, containment, items, contacts;
+ *  a saved spot without a place shows its coordinates and can become one. */
+export function PlaceDetailPanel({ placeId, savedPlaceId, onClose, onOpenPlace }: {
+  placeId?: string;
+  savedPlaceId?: string;
+  onClose: () => void;
+  onOpenPlace: (placeId: string) => void;
+}) {
+  const { saved, isLoading: savedLoading } = useSavedPlace({ savedPlaceId, placeId });
+  const effectivePlaceId = placeId ?? saved?.placeId ?? undefined;
+  const { data: place, isLoading: placeLoading } = useGeoPlace(effectivePlaceId);
+  const isLoading = savedLoading || placeLoading;
+  const rawSpot = !effectivePlaceId ? saved : null;
 
   return (
     <Paper
@@ -55,7 +65,7 @@ export function PlaceDetailPanel({ placeId, onClose }: { placeId: string; onClos
         <CloseIcon fontSize="small" />
       </IconButton>
       {isLoading && <Typography variant="caption" sx={{ color: 'text.secondary' }} component="p">Loading…</Typography>}
-      {!isLoading && !place && <Typography component="p" sx={{ textAlign: 'center', color: 'text.subtle', mt: 6 }}>Place not found.</Typography>}
+      {!isLoading && !place && !rawSpot && <Typography component="p" sx={{ textAlign: 'center', color: 'text.subtle', mt: 6 }}>Place not found.</Typography>}
       {place && (
         <>
           <Paper variant="outlined" component="section" sx={{ p: '12px 16px', my: 1.5 }}>
@@ -71,32 +81,55 @@ export function PlaceDetailPanel({ placeId, onClose }: { placeId: string; onClos
               </Box>
             )}
             {place.formattedAddress && <Typography component="p" sx={{ mb: 1, color: 'text.secondary' }}>{place.formattedAddress}</Typography>}
-            {formatCoords(place.latitude, place.longitude) && (
-              <Typography component="p" sx={{ mb: 1, color: 'text.secondary' }}>
-                <PlaceIcon fontSize="small" sx={{ verticalAlign: -5, mr: 0.5 }} />{formatCoords(place.latitude, place.longitude)}
-                {osmUrl(place.latitude, place.longitude) && (
-                  <>
-                    {' '}
-                    <Button
-                      variant="text"
-                      href={osmUrl(place.latitude, place.longitude)!}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      OSM ↗
-                    </Button>
-                  </>
-                )}
-              </Typography>
-            )}
+            <Coords lat={place.latitude} lon={place.longitude} />
           </Paper>
           <SavedPanel place={place} />
-          <ItemsPanel placeId={placeId} />
-          <ContactsPanel placeId={placeId} />
+          <ItemsPanel placeId={place.id} />
+          <ContactsPanel placeId={place.id} />
+        </>
+      )}
+      {rawSpot && (
+        <>
+          <Paper variant="outlined" component="section" sx={{ p: '12px 16px', my: 1.5 }}>
+            <h3 style={{ margin: 0 }}>{rawSpot.label}</h3>
+            <Coords lat={rawSpot.latitude} lon={rawSpot.longitude} />
+            <MakePlace saved={rawSpot} onLinked={onOpenPlace} />
+          </Paper>
+          <DrawerSection title="Saved place">
+            <SavedPlaceFields saved={rawSpot} onRemoved={onClose} />
+          </DrawerSection>
         </>
       )}
     </Paper>
   );
+}
+
+function Coords({ lat, lon }: { lat: number | null | undefined; lon: number | null | undefined }) {
+  const coords = formatCoords(lat, lon);
+  const osm = osmUrl(lat, lon);
+  if (!coords) return null;
+  return (
+    <Typography component="p" sx={{ mb: 1, color: 'text.secondary' }}>
+      <PlaceIcon fontSize="small" sx={{ verticalAlign: -5, mr: 0.5 }} />{coords}
+      {osm && (
+        <>
+          {' '}
+          <Button variant="text" href={osm} target="_blank" rel="noreferrer">OSM ↗</Button>
+        </>
+      )}
+    </Typography>
+  );
+}
+
+/** Matches a place within the dedupe radius under the spot's label, else creates one, then opens it. */
+function MakePlace({ saved, onLinked }: { saved: SavedPlaceDto; onLinked: (placeId: string) => void }) {
+  const link = useLinkSavedToPlace();
+  const showSnack = useSnackbar();
+  const make = () => link.mutate(saved, {
+    onSuccess: ({ placeId }) => onLinked(placeId),
+    onError: (e) => showSnack(errText(e) ?? 'Request failed.'),
+  });
+  return <Button variant="outlined" disabled={link.isPending} onClick={make}>Make it a place</Button>;
 }
 
 const CATEGORIES = Object.values(PlaceCategory);
@@ -148,7 +181,7 @@ function PlaceHeading({ place }: { place: PlaceDto }) {
 
 /** Your own label for the place: name, notes, favorite; or a way to save it. */
 function SavedPanel({ place }: { place: PlaceDto }) {
-  const { saved, isLoading } = useSavedPlaceFor(place.id);
+  const { saved, isLoading } = useSavedPlace({ placeId: place.id });
   const { createSaved } = useEdits();
   if (isLoading) return null;
   return (
@@ -168,7 +201,7 @@ function SavedPanel({ place }: { place: PlaceDto }) {
   );
 }
 
-function SavedPlaceFields({ saved }: { saved: SavedPlaceDto }) {
+function SavedPlaceFields({ saved, onRemoved }: { saved: SavedPlaceDto; onRemoved?: () => void }) {
   const { updateSaved, deleteSaved } = useEdits();
   const [draft, setDraft] = useState<{ label: string; notes: string } | null>(null);
 
@@ -215,7 +248,7 @@ function SavedPlaceFields({ saved }: { saved: SavedPlaceDto }) {
             />
           )}
         />
-        <Button color="error" disabled={deleteSaved.isPending} onClick={() => deleteSaved.mutate({ id: saved.id })}>Remove</Button>
+        <Button color="error" disabled={deleteSaved.isPending} onClick={() => deleteSaved.mutate({ id: saved.id }, { onSuccess: onRemoved })}>Remove</Button>
       </Stack>
     </Stack>
   );

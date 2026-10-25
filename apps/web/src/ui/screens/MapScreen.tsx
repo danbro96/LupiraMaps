@@ -59,7 +59,7 @@ import { EventIcon, FamilyIcon, FilterIcon, HomeIcon, WorkIcon } from '@danbro96
 
 const QUICK_PLACE_ICONS = { home: HomeIcon, work: WorkIcon, parents: FamilyIcon, event: EventIcon } as const;
 
-const SELECTION_KEYS = ['place', 'item', 'occ', 'at'];
+const SELECTION_KEYS = ['place', 'saved', 'item', 'occ', 'at'];
 const LAYERS_PREF = 'map.layers';
 const RANGE_PREF = 'map.range';
 const DEFAULT_ACTIVE = LAYER_KEYS.filter((k) => DEFAULT_LAYERS[k]);
@@ -70,7 +70,7 @@ const HIT_RADIUS = 10;
 type FlyTarget = { center: [number, number]; zoom?: number; spanM?: number; bounds?: Bbox };
 
 /** The map over everything located: events, GPS movement, contacts, saved places, photos, hotspots. State rides
- * the URL (?at ?from ?to ?layers ?place), and the layers and range you pick are remembered for when it names none.
+ * the URL (?at ?from ?to ?layers ?place ?saved), and the layers and range you pick are remembered for when it names none.
  * A click lists everything under it; the strip under the controls jumps to your home, work and next events. */
 export default function MapScreen() {
   const [params, setParams] = useSearchParams();
@@ -78,6 +78,7 @@ export default function MapScreen() {
   const compact = useMediaQuery(useTheme().breakpoints.down('sm'));
   const [filtersOpen, setFiltersOpen] = useState(false);
   const selectedPlaceId = params.get('place') ?? undefined;
+  const selectedSavedId = params.get('saved') ?? undefined;
 
   const setParam = (key: string, value: string | undefined) =>
     setParams((prev) => {
@@ -89,7 +90,7 @@ export default function MapScreen() {
 
   // One selection at a time: each flies the map on load, so leaving an older one in the URL makes a
   // reload return to it instead of to what was picked last.
-  const select = (key: 'place' | 'item', value: string | undefined, occurrence?: string | null) =>
+  const select = (key: 'place' | 'saved' | 'item', value: string | undefined, occurrence?: string | null) =>
     setParams((prev) => {
       const next = new URLSearchParams(prev);
       for (const k of SELECTION_KEYS) next.delete(k);
@@ -154,6 +155,10 @@ export default function MapScreen() {
     setHits(undefined);
     select('place', placeId);
   };
+  const openSaved = (savedPlaceId: string) => {
+    setHits(undefined);
+    select('saved', savedPlaceId);
+  };
   const onHits = (list: MapHit[]) => {
     if (list.length === 0) {
       closeHits();
@@ -177,6 +182,10 @@ export default function MapScreen() {
     }
     if (action === 'place' && (hit.kind === 'saved' || hit.kind === 'hotspot') && hit.placeId) {
       openPlace(hit.placeId);
+      return;
+    }
+    if (action === 'place' && hit.kind === 'saved' && hit.savedPlaceId) {
+      openSaved(hit.savedPlaceId);
       return;
     }
     if (action !== 'open') return;
@@ -215,19 +224,19 @@ export default function MapScreen() {
 
   const fitCollections = [events.features, movement.visits, contacts.features, saved.features];
   // A deep link already aimed the camera; turning a layer on later must not pull it away.
-  const deepLinked = !!selectedPlaceId || !!atParam || !!params.get('item');
+  const deepLinked = !!selectedPlaceId || !!selectedSavedId || !!atParam || !!params.get('item');
   const anyLoading = events.isLoading || movement.isLoading || contacts.isLoading || saved.isLoading || photos.isLoading
     || hotspots.isLoading;
 
   const showIndex = params.get('index') === '1';
   const showHistory = params.get('history') === '1';
   const indexGroups: IndexGroup[] = (() => {
-    const flyTo = (feature: GeoJSON.Feature, placeId?: unknown) => () => {
+    const flyTo = (feature: GeoJSON.Feature, key: 'place' | 'saved', id: unknown) => () => {
       const [lon, lat] = (feature.geometry as GeoJSON.Point).coordinates;
       setFlyTarget({ center: [lon, lat] });
-      if (typeof placeId === 'string' && placeId) select('place', placeId);
+      if (typeof id === 'string' && id) select(key, id);
       // Both panels are bottom sheets on a phone; the place sheet replaces the index rather than stacking on it.
-      if (compact && typeof placeId === 'string' && placeId) setParam('index', undefined);
+      if (compact && typeof id === 'string' && id) setParam('index', undefined);
     };
 
     // Contacts grouped per (deduped) address kind — mixed-kind households land under the joined kind.
@@ -240,7 +249,7 @@ export default function MapScreen() {
         key: `c:${p.placeId}`,
         primary: ((p.names as string[]) ?? []).join(', '),
         secondary: p.placeName as string,
-        onClick: flyTo(f, p.placeId),
+        onClick: flyTo(f, 'place', p.placeId),
       });
       byKind.set(kind, rows);
     }
@@ -253,7 +262,7 @@ export default function MapScreen() {
       return {
         key: `s:${p.savedPlaceId}`,
         primary: p.label,
-        onClick: flyTo(f, p.placeId),
+        onClick: p.placeId ? flyTo(f, 'place', p.placeId) : flyTo(f, 'saved', p.savedPlaceId),
       };
     });
 
@@ -277,7 +286,7 @@ export default function MapScreen() {
         key: `cf:${p.placeId}:${p.status}`,
         primary: ((p.names as string[]) ?? []).join(', '),
         secondary: `${((p.periods as string[]) ?? []).join(', ')} · ${p.placeName}`,
-        onClick: flyTo(f, p.placeId),
+        onClick: flyTo(f, 'place', p.placeId),
       };
     };
     const formerFeatures = contacts.former.features;
@@ -323,7 +332,7 @@ export default function MapScreen() {
         {activeLayers.includes('photos') && <ViewportReporter onChange={setViewport} />}
         <MapClicks onHits={onHits} />
         <SelectionMarker point={selected} />
-        <FlyToPlace placeId={selectedPlaceId} onLocated={setSelected} />
+        <FlyToPlace placeId={selectedPlaceId} savedPlaceId={selectedSavedId} onLocated={setSelected} />
         {flyTarget && <FlyToPoint target={flyTarget} />}
         <FitToData collections={fitCollections} skip={deepLinked} />
         {hits && popoverAnchor && (
@@ -388,13 +397,15 @@ export default function MapScreen() {
 
       {showIndex && <MapIndexPanel groups={indexGroups} onClose={() => setParam('index', undefined)} />}
 
-      {selectedPlaceId && (
+      {(selectedPlaceId || selectedSavedId) && (
         <PlaceDetailPanel
           placeId={selectedPlaceId}
+          savedPlaceId={selectedSavedId}
           onClose={() => {
-            setParam('place', undefined);
+            select('place', undefined);
             setSelected(undefined);
           }}
+          onOpenPlace={openPlace}
         />
       )}
     </Box>

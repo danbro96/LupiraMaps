@@ -1,31 +1,44 @@
 import type { FeatureCollection, Point } from 'geojson';
 import { useEffect, useRef } from 'react';
 import { bboxOf, mapViewport, padBbox, type GeoPoint, type MapViewport } from '@danbro96/lupira-domain-places/geo';
-import { placeSpanM, zoomForSpan } from '@danbro96/lupira-domain-maps/mapZoom';
-import { useGeoPlace } from '../../../state/usePlaces';
+import { TARGET_ZOOM, placeSpanM, zoomForSpan } from '@danbro96/lupira-domain-maps/mapZoom';
+import { useGeoPlace, useSavedPlace } from '../../../state/usePlaces';
 import { useMap } from './MapCanvas';
 
 /** MUI's `sm` breakpoint. */
 const PHONE_MAX_WIDTH_PX = 600;
 
-/** Fly to the selected gazetteer place whenever ?place= changes, framed by the kind of place, and say where
- *  it is so the screen can pin it. */
-export function FlyToPlace({ placeId, onLocated }: { placeId: string | undefined; onLocated: (point: [number, number]) => void }) {
+/** Fly to the selected place whenever ?place= or ?saved= changes, framed by the kind of place (a raw saved spot
+ *  at pin zoom), and say where it is so the screen can pin it. */
+export function FlyToPlace({ placeId, savedPlaceId, onLocated }: {
+  placeId: string | undefined;
+  savedPlaceId: string | undefined;
+  onLocated: (point: [number, number]) => void;
+}) {
   const map = useMap();
-  const { data: place } = useGeoPlace(placeId);
+  const { saved } = useSavedPlace({ savedPlaceId });
+  const linkedId = placeId ?? saved?.placeId ?? undefined;
+  const { data: place } = useGeoPlace(linkedId);
   const flownTo = useRef<string>(undefined);
+  const key = placeId ?? savedPlaceId;
 
   useEffect(() => {
-    if (!placeId) { flownTo.current = undefined; return; }
-    if (!place || place.latitude == null || place.longitude == null || flownTo.current === placeId) return;
-    flownTo.current = placeId;
+    if (!key) { flownTo.current = undefined; return; }
+    if (flownTo.current === key) return;
+    const target = place && place.latitude != null && place.longitude != null
+      ? { lon: place.longitude, lat: place.latitude, spanM: placeSpanM(place) }
+      : !linkedId && saved?.latitude != null && saved.longitude != null
+        ? { lon: saved.longitude, lat: saved.latitude, spanM: null }
+        : null;
+    if (!target) return;
+    flownTo.current = key;
     const { clientWidth, clientHeight } = map.getContainer();
-    const zoom = zoomForSpan(placeSpanM(place), clientWidth, place.latitude);
+    const zoom = target.spanM != null ? zoomForSpan(target.spanM, clientWidth, target.lat) : TARGET_ZOOM;
     // Below sm the place panel is a bottom sheet up to 60% tall: centre the place in the map left above it.
     const offset: [number, number] = clientWidth < PHONE_MAX_WIDTH_PX ? [0, -clientHeight * 0.3] : [0, 0];
-    map.flyTo({ center: [place.longitude, place.latitude], zoom, offset });
-    onLocated([place.longitude, place.latitude]);
-  }, [map, placeId, place, onLocated]);
+    map.flyTo({ center: [target.lon, target.lat], zoom, offset });
+    onLocated([target.lon, target.lat]);
+  }, [map, key, linkedId, place, saved, onLocated]);
   return null;
 }
 
