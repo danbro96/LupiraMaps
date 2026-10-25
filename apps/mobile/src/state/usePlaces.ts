@@ -11,7 +11,7 @@ import {
   type UpdateSavedPlaceRequest,
 } from '@lupira/maps-api/models';
 import type { GeoPoint } from '@danbro96/lupira-domain-places/geo';
-import { findSavedPlace } from '@lupira/maps-domain/savedPlaces';
+import { findSavedPlace, linkPlan } from '@lupira/maps-domain/savedPlaces';
 
 const SAVED_PLACES_KEY = ['map', 'saved-places'] as const;
 
@@ -69,6 +69,28 @@ export function useSavePinnedPlace() {
       if (existing) return { saved: existing, existed: true };
       const saved = await createSavedPlace({ label: name || place.name, placeId: place.placeId, isFavorite });
       return { saved, existed: false };
+    },
+    onSuccess: invalidate,
+  });
+}
+
+/** A raw saved spot becomes a catalog place (matched within the dedupe radius, else created under its label);
+ *  `savedPlaceId` is the saved entry labelling it afterwards. */
+export function useLinkSavedToPlace() {
+  const invalidate = useInvalidatePlaces();
+  return useMutation({
+    mutationFn: async (saved: SavedPlaceDto): Promise<{ placeId: string; savedPlaceId: string }> => {
+      if (saved.latitude == null || saved.longitude == null) throw new Error('The saved place has no coordinates.');
+      const place = await createPlaceFromPin({ name: saved.label, latitude: saved.latitude, longitude: saved.longitude });
+      if (!place.placeId) throw new Error('No place resolved at the pin.');
+      const plan = linkPlan(await listSavedPlaces(), saved, place.placeId);
+      if (plan.kind === 'link') {
+        await updateSavedPlace(saved.id, { placeId: place.placeId });
+        return { placeId: place.placeId, savedPlaceId: saved.id };
+      }
+      if (plan.notes !== null) await updateSavedPlace(plan.into.id, { notes: plan.notes });
+      await deleteSavedPlace(saved.id);
+      return { placeId: place.placeId, savedPlaceId: plan.into.id };
     },
     onSuccess: invalidate,
   });

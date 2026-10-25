@@ -15,7 +15,8 @@ import { placeCategoryLabel } from '@lupira/maps-domain/placeCuration';
 import { describePlaceItem } from '@lupira/maps-domain/placeItems';
 import { findSavedPlace } from '@lupira/maps-domain/savedPlaces';
 import {
-  useCreateSavedPlace, useDeleteSavedPlace, useGeoPlace, usePlaceItems, useSavedPlaces, useUpdatePlace, useUpdateSavedPlace,
+  useCreateSavedPlace, useDeleteSavedPlace, useGeoPlace, useLinkSavedToPlace, usePlaceItems, useSavedPlaces, useUpdatePlace,
+  useUpdateSavedPlace,
 } from '../../state/usePlaces';
 import { EntryCodes } from '../components/EntryCodes';
 import { ICONS } from '../icons';
@@ -67,7 +68,7 @@ export function PlaceDetailScreen() {
       <EntryCodes placeId={placeId} />
 
       {saved ? (
-        <SavedPlaceSection saved={saved} onDeleted={() => navigation.goBack()} />
+        <SavedPlaceSection saved={saved} onDeleted={() => navigation.goBack()} onLinked={(ids) => navigation.setParams(ids)} />
       ) : (
         place && <SaveGazetteerPlace place={place} />
       )}
@@ -77,12 +78,17 @@ export function PlaceDetailScreen() {
   );
 }
 
-function SavedPlaceSection({ saved, onDeleted }: { saved: SavedPlaceDto; onDeleted: () => void }) {
+function SavedPlaceSection({ saved, onDeleted, onLinked }: {
+  saved: SavedPlaceDto;
+  onDeleted: () => void;
+  onLinked: (ids: { placeId: string; savedPlaceId: string }) => void;
+}) {
   const c = useColors();
   const online = useOnline();
   const confirm = useConfirm();
   const update = useUpdateSavedPlace();
   const remove = useDeleteSavedPlace();
+  const link = useLinkSavedToPlace();
   const [draft, setDraft] = useState<{ label: string; notes: string } | null>(null);
 
   const save = () => {
@@ -99,6 +105,7 @@ function SavedPlaceSection({ saved, onDeleted }: { saved: SavedPlaceDto; onDelet
     if (!ok) return;
     remove.mutate(saved.id, { onSuccess: onDeleted, onError: () => toastError("Couldn't remove the place") });
   };
+  const makePlace = () => link.mutate(saved, { onSuccess: onLinked, onError: () => toastError("Couldn't make it a place") });
 
   return (
     <>
@@ -130,6 +137,9 @@ function SavedPlaceSection({ saved, onDeleted }: { saved: SavedPlaceDto; onDelet
             )}
           />
           <View style={[styles.actions, styles.inset]}>
+            {!saved.placeId && (
+              <Button title="Make it a place" variant="secondary" onPress={makePlace} disabled={!online} loading={link.isPending} />
+            )}
             <Button title="Remove saved place" variant="destructive" onPress={() => void onDelete()} disabled={!online} loading={remove.isPending} />
           </View>
         </>
