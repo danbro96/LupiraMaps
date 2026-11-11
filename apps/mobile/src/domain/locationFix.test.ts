@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
-  CADENCE, CADENCE_SWITCH_AFTER, UPLOAD_MAX_AGE_MS, UPLOAD_MIN_ROWS, admitFix, classifyActivity, fixIntervalMs,
-  isTimestampAcceptable, nextCadence, receiptIsCoherent, rejectDisposition, shouldUploadAfterRecord, toNdjsonLine,
-  type LocationFix,
+  KEEP_SPACING_MS, RECORDING, UPLOAD_MAX_AGE_MS, UPLOAD_MIN_ROWS, admitFix, classifyActivity, effectiveSpeedMps,
+  isTimestampAcceptable, receiptIsCoherent, rejectDisposition, shouldUploadAfterRecord, toNdjsonLine,
+  type LocationFix, type SeenFix,
 } from './locationFix';
 
 const NOW = Date.parse('2026-08-30T12:00:00.000Z');
@@ -39,50 +39,33 @@ describe('classifyActivity', () => {
   });
 });
 
-describe('nextCadence', () => {
-  it('ignores a single disagreeing fix', () => {
-    const d = nextCadence('Still', 'Still', 0, 'Walk');
-    expect(d.restart).toBe(false);
-    expect(d.activity).toBe('Still');
+describe('effectiveSpeedMps', () => {
+  const at = (ms: number, north: number, accuracyM: number | null = 8): SeenFix =>
+    ({ ms, lat: 59.33 + north / 111_320, lon: 18.07, accuracyM });
+
+  it('trusts a reported speed', () => {
+    expect(effectiveSpeedMps(1.4, at(NOW, 0), at(NOW + 60_000, 0))).toBe(1.4);
   });
 
-  it('switches only after a sustained streak', () => {
-    let activity = 'Still' as const;
-    let streak = 0;
-    let restart = false;
-    for (let i = 0; i < CADENCE_SWITCH_AFTER; i++) {
-      const d = nextCadence(activity, 'Walk', streak, 'Walk');
-      streak = d.streak;
-      restart = d.restart;
-      if (d.restart) expect(d.activity).toBe('Walk');
-    }
-    expect(restart).toBe(true);
+  it('derives speed from displacement when the OS reports 0', () => {
+    expect(effectiveSpeedMps(0, at(NOW, 0), at(NOW + 60_000, 300))).toBeCloseTo(5, 1);
   });
 
-  it('resets the streak when the observation changes', () => {
-    const first = nextCadence('Still', 'Walk', 2, 'Vehicle');
-    expect(first.streak).toBe(1);
-    expect(first.restart).toBe(false);
+  it('reads a move within the fixes\' accuracy as standing still', () => {
+    expect(effectiveSpeedMps(0, at(NOW, 0, 30), at(NOW + 60_000, 25, 30))).toBe(0);
   });
 
-  it('never restarts for an activity that shares the current profile', () => {
-    // Walk and Run map to the same interval/distance — restarting would drop the OS subscription
-    // for nothing every time a walk breaks into a jog.
-    const d = nextCadence('Walk', 'Walk', 0, 'Run');
-    expect(d.restart).toBe(false);
-    expect(d.streak).toBe(0);
+  it('has nothing to compare with on the first fix', () => {
+    expect(effectiveSpeedMps(null, null, at(NOW, 0))).toBeNull();
+    expect(effectiveSpeedMps(0, null, at(NOW, 0))).toBe(0);
   });
 });
 
-describe('fixIntervalMs', () => {
-  it('uses the profile interval for a fix of the same or unknown pace', () => {
-    expect(fixIntervalMs('Still', 'Still')).toBe(CADENCE.Still.timeIntervalMs);
-    expect(fixIntervalMs('Still', 'Unknown')).toBe(CADENCE.Still.timeIntervalMs);
-  });
-
-  it('lets a faster fix keep its own pace before the cadence switches', () => {
-    expect(fixIntervalMs('Still', 'Vehicle')).toBe(CADENCE.Vehicle.timeIntervalMs);
-    expect(fixIntervalMs('Vehicle', 'Still')).toBe(CADENCE.Vehicle.timeIntervalMs);
+describe('KEEP_SPACING_MS', () => {
+  it('thins a parked phone to five minutes and keeps every moving fix', () => {
+    expect(KEEP_SPACING_MS.Still).toBe(300_000);
+    expect(KEEP_SPACING_MS.Walk).toBe(RECORDING.timeIntervalMs);
+    expect(KEEP_SPACING_MS.Vehicle).toBe(RECORDING.timeIntervalMs);
   });
 });
 

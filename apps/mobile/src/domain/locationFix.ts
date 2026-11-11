@@ -1,4 +1,6 @@
-/** GPS recording: the wire shape, activity classification, and the cadence profiles that follow from it.
+import { haversineM } from '@danbro96/lupira-domain-places/geo';
+
+/** GPS recording: the wire shape, activity classification, and the recording request with its queue spacing.
  *  Pure — every rule here is unit-tested, because a mistake costs a day of silently wrong tracks. */
 
 /** Matches LupiraLocationApi's `MotionActivity` enum exactly; sent as the string name. */
@@ -31,8 +33,8 @@ export const MAX_USEFUL_ACCURACY_M = 50;
 
 /** expo-location reports no activity — Android's ActivityRecognition API isn't exposed, and
  *  `activityType` is an iOS input hint, not an output. Speed is the only signal we actually have,
- *  so classification is a speed ladder. Thresholds are deliberately wide: the value drives cadence
- *  and the server's trip segmentation, and over-reacting to a noisy sample is worse than lagging. */
+ *  so classification is a speed ladder fed by `effectiveSpeedMps`. Thresholds are deliberately wide:
+ *  the value drives queue spacing and the map's per-fix colouring. */
 export function classifyActivity(speedMps: number | null): MotionActivity {
   if (speedMps == null || speedMps < 0) return 'Unknown';
   if (speedMps < 0.5) return 'Still';
@@ -42,59 +44,39 @@ export function classifyActivity(speedMps: number | null): MotionActivity {
   return 'Vehicle';
 }
 
-/** How hard to sample, per activity class. Still is cheap because a parked phone is the common case;
- *  Vehicle trades interval for distance because 30 s at road speed is already ~400 m.
- *
- *  Accuracy stays HIGH in every profile, including Still. Dropping to Balanced would ask Android for
- *  ~100 m fixes — above the server's 50 m cutoff — and Still is precisely when visits are detected
- *  (80 m radius, ≥8 min), so a "cheap" still profile would silently yield zero visits and no trips.
- *  The battery saving comes from the five-minute interval, not from a worse fix. */
-export type CadenceProfile = { timeIntervalMs: number; distanceIntervalM: number };
+/** One fixed OS request, never changed: changing it means re-starting a location foreground service, which Android 12+
+ *  forbids while the app is backgrounded. Accuracy stays High — Balanced (~100 m) sits above the server's 50 m cutoff
+ *  and would yield no visits. No distance filter: a parked phone must still report, or visits vanish. Backgrounded,
+ *  fixes reach JS in batches of about five minutes. */
+export const RECORDING = { timeIntervalMs: 60_000, distanceIntervalM: 0, deferredUpdatesIntervalMs: 300_000 } as const;
 
-export const CADENCE: Record<MotionActivity, CadenceProfile> = {
-  Unknown: { timeIntervalMs: 60_000, distanceIntervalM: 100 },
-  Still: { timeIntervalMs: 300_000, distanceIntervalM: 200 },
-  Walk: { timeIntervalMs: 60_000, distanceIntervalM: 50 },
-  Run: { timeIntervalMs: 60_000, distanceIntervalM: 50 },
-  Cycle: { timeIntervalMs: 30_000, distanceIntervalM: 150 },
-  Vehicle: { timeIntervalMs: 30_000, distanceIntervalM: 150 },
+/** Queue spacing per activity: a parked phone needs one fix per five minutes; anything moving keeps every fix. */
+export const KEEP_SPACING_MS: Record<MotionActivity, number> = {
+  Unknown: RECORDING.timeIntervalMs,
+  Still: 300_000,
+  Walk: RECORDING.timeIntervalMs,
+  Run: RECORDING.timeIntervalMs,
+  Cycle: RECORDING.timeIntervalMs,
+  Vehicle: RECORDING.timeIntervalMs,
 };
 
-/** Profiles that are identical don't warrant a restart — Walk/Run and Cycle/Vehicle share one. */
-export function sameCadence(a: MotionActivity, b: MotionActivity): boolean {
-  return CADENCE[a].timeIntervalMs === CADENCE[b].timeIntervalMs
-    && CADENCE[a].distanceIntervalM === CADENCE[b].distanceIntervalM;
-}
+/** A move within this, or within either fix's accuracy, is position jitter rather than motion. */
+const MIN_MOVE_M = 10;
 
-/** Consecutive disagreeing fixes required before the cadence actually switches. Changing options means
- *  stopping and restarting the OS updates, so a single GPS glitch must never trigger it. */
-export const CADENCE_SWITCH_AFTER = 3;
+export type SeenFix = { ms: number; lat: number; lon: number; accuracyM: number | null };
 
-export type CadenceDecision = { activity: MotionActivity; streak: number; restart: boolean };
-
-/** Hysteresis gate. Feed every fix's classified activity; `restart: true` means the caller should
- *  stop+start location updates with the new profile. */
-export function nextCadence(
-  current: MotionActivity,
-  streakActivity: MotionActivity,
-  streak: number,
-  observed: MotionActivity,
-): CadenceDecision {
-  if (sameCadence(observed, current)) return { activity: current, streak: 0, restart: false };
-  const nextStreak = observed === streakActivity ? streak + 1 : 1;
-  if (nextStreak < CADENCE_SWITCH_AFTER) return { activity: current, streak: nextStreak, restart: false };
-  return { activity: observed, streak: 0, restart: true };
+/** expo-location reports 0, not null, when the OS fix carries no speed, so a 0 is checked against the displacement
+ *  since the previous fix. Null when there is nothing to compare with. */
+export function effectiveSpeedMps(reportedMps: number | null, prev: SeenFix | null, fix: SeenFix): number | null {
+  if (reportedMps != null && reportedMps > 0) return reportedMps;
+  if (prev == null || fix.ms <= prev.ms) return reportedMps;
+  const moved = haversineM(prev, fix);
+  if (moved <= Math.max(prev.accuracyM ?? 0, fix.accuracyM ?? 0, MIN_MOVE_M)) return 0;
+  return moved / ((fix.ms - prev.ms) / 1000);
 }
 
 /** OS delivery jitters around the requested interval; without slack every other on-time fix is dropped. */
 export const FIX_INTERVAL_SLACK = 0.8;
-
-/** A fix that already moves faster than the profile keeps its own pace, so the hysteresis window
- *  before a cadence switch doesn't thin a trip down to Still spacing. */
-export function fixIntervalMs(profile: MotionActivity, fixActivity: MotionActivity): number {
-  const base = CADENCE[profile].timeIntervalMs;
-  return fixActivity === 'Unknown' ? base : Math.min(base, CADENCE[fixActivity].timeIntervalMs);
-}
 
 /** Queue admission by spacing. A clock that jumped backwards counts as a gap, or it would block every
  *  fix until wall-clock caught up. */

@@ -1,4 +1,4 @@
-import type { LocationFix, MotionActivity, LocationProvider } from '../domain/locationFix';
+import type { LocationFix, MotionActivity, LocationProvider, SeenFix } from '../domain/locationFix';
 import type { Db, Tx } from '@danbro96/lupira-expo-sqlite/types';
 import { getMeta, setMeta } from './db/meta';
 
@@ -127,16 +127,22 @@ export async function clearQueue(tx: Tx): Promise<void> {
   await tx.run('DELETE FROM location_fix_queue');
 }
 
-const LAST_KEPT_KEY = 'location.lastKeptFixMs';
+const CURSOR_KEY = 'location.recorderCursor';
+const LEGACY_LAST_KEPT_KEY = 'location.lastKeptFixMs';
 const LAST_UPLOAD_KEY = 'location.lastUploadAt';
 
-export async function lastKeptFixMs(tx: Tx): Promise<number | null> {
-  const stored = await getMeta(tx, LAST_KEPT_KEY);
-  return stored ? Number(stored) : null;
+/** The last fix the recorder saw (implied speed) and when it last queued one (spacing). */
+export type RecorderCursor = { seen: SeenFix | null; keptMs: number | null };
+
+export async function recorderCursor(tx: Tx): Promise<RecorderCursor> {
+  const stored = await getMeta(tx, CURSOR_KEY);
+  if (stored) return JSON.parse(stored) as RecorderCursor;
+  const legacyKept = await getMeta(tx, LEGACY_LAST_KEPT_KEY);
+  return { seen: null, keptMs: legacyKept ? Number(legacyKept) : null };
 }
 
-export async function setLastKeptFixMs(tx: Tx, ms: number): Promise<void> {
-  await setMeta(tx, LAST_KEPT_KEY, String(ms));
+export async function setRecorderCursor(tx: Tx, cursor: RecorderCursor): Promise<void> {
+  await setMeta(tx, CURSOR_KEY, JSON.stringify(cursor));
 }
 
 export async function lastUploadAt(tx: Tx): Promise<string | null> {
