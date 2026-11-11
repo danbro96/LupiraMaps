@@ -1,4 +1,5 @@
 import * as SecureStore from 'expo-secure-store';
+import { logDebug } from '@danbro96/lupira-expo-diagnostics/log';
 import { registerDevice, retireDevice } from '@lupira/maps-api/fetch/location';
 
 /** This phone's identity to LupiraLocationApi. The ingest key is a bearer-equivalent secret shown
@@ -39,17 +40,22 @@ export async function ensureDevice(label: string): Promise<LocationDevice> {
 export async function forgetDevice(): Promise<void> {
   const existing = await loadDevice();
   if (existing) await retireDevice(existing.deviceId).catch(() => undefined);
-  await Promise.all([
-    SecureStore.deleteItemAsync(KEYS.deviceId),
-    SecureStore.deleteItemAsync(KEYS.apiKey),
-  ]);
+  await deleteCredentials();
 }
 
 /** Drops only the local copy — used when the server says the device is gone (401 on ingest), where
  *  calling retire again would just 404. */
 export async function clearDeviceCredentials(): Promise<void> {
-  await Promise.all([
+  await deleteCredentials();
+}
+
+// SecureStore rejects a refused delete; the revocation and erase flows must still finish.
+async function deleteCredentials(): Promise<void> {
+  const results = await Promise.allSettled([
     SecureStore.deleteItemAsync(KEYS.deviceId),
     SecureStore.deleteItemAsync(KEYS.apiKey),
   ]);
+  for (const r of results) {
+    if (r.status === 'rejected') logDebug('location', `credential delete refused: ${String(r.reason)}`);
+  }
 }
