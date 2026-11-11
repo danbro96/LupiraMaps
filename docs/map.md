@@ -46,6 +46,7 @@ A missing basemap *sprite* is equally fatal (style stuck loading); `loadMapStyle
 - An `at` target waits for `onDidFinishLoadingMap` — the map mounts after its style loads, so an early `easeTo` is silently dropped.
 - One age limit (`prefs.mapSince`, `@lupira/maps-domain/mapWindow`) bounds events, photos, hotspots and movement; layer toggles persist in `prefs.mapLayers`.
 - A jump strip under the header (`QuickPlacesStrip`, `useQuickPlaces`) lists your current Home/Work residencies and your parents' home, then the next placed events; a jump frames by place type (`@danbro96/lupira-domain-maps/mapZoom`) and an event opens its preview card.
+- Release builds are R8-minified. `expo-build-properties` `android.extraProguardRules` (`app.json`) keeps Room databases and WorkManager `InputMerger`s (instantiated by reflection under expo-background-task) and `org.maplibre.reactnative.**` (the RN wrapper ships no consumer rules). The Sentry Gradle plugin uploads the mapping.
 
 ### Reads and the offline cache
 
