@@ -19,7 +19,7 @@ import { links } from '../../../config/siblings';
 import { useGeoPlace, useLinkSavedToPlace, usePlaceEdits, usePlaceItems, useSavedPlace } from '../../../state/usePlaces';
 import { useResidencyRows } from '../../../state/useResidencies';
 import { errText } from '../../errText';
-import { EntryCodes } from '../places/EntryCodes';
+import { PlaceEntryCodes } from '../places/PlaceEntryCodes';
 import { CategoryIcon } from '../CategoryIcon';
 import { DrawerSection } from '../DrawerSection';
 import IconButton from '@mui/material/IconButton';
@@ -289,7 +289,7 @@ function ContactsPanel({ placeId }: { placeId: string }) {
   if (!residents) return null;
   return (
     <DrawerSection title="Contacts here">
-      <EntryCodes placeId={placeId} editable />
+      <PlaceEntryCodes placeId={placeId} />
       {[...residents.active, ...residents.other].map((r) => (
         <Row component="a" key={`${r.contactId}-${r.status}`} href={links.calContactUrl(r.contactId)}>
           <RowName>{r.displayName}</RowName>

@@ -18,7 +18,7 @@ import {
   useCreateSavedPlace, useDeleteSavedPlace, useGeoPlace, useLinkSavedToPlace, usePlaceItems, useSavedPlaces, useUpdatePlace,
   useUpdateSavedPlace,
 } from '../../state/usePlaces';
-import { EntryCodes } from '../components/EntryCodes';
+import { PlaceEntryCodes } from '../components/PlaceEntryCodes';
 import { ICONS } from '../icons';
 import type { RootStackParamList } from '../navigation/types';
 import { openSibling } from '../siblingLinks';
@@ -65,7 +65,7 @@ export function PlaceDetailScreen() {
           </View>
         )}
       </View>
-      <EntryCodes placeId={placeId} />
+      <PlaceEntryCodes placeId={placeId} editable />
 
       {saved ? (
         <SavedPlaceSection saved={saved} onDeleted={() => navigation.goBack()} onLinked={(ids) => navigation.setParams(ids)} />

@@ -10,7 +10,7 @@ import { usePlaceFromPin } from '../../../state/usePlaces';
 import { errText } from '../../errText';
 import { useSnackbar } from '@danbro96/lupira-web-mui/SnackbarHost';
 import { WrapRow } from '../WrapRow';
-import { EntryCodes } from '../places/EntryCodes';
+import { PlaceEntryCodes } from '../places/PlaceEntryCodes';
 
 const SCREENS = { placeScreen: true, savedPlaceScreen: true };
 
@@ -27,7 +27,7 @@ export function MapHitsCard({ hits, theme, onAction, onOpenPlace }: {
   const single = hits.length === 1 ? hits[0] : focused;
   // Someone lives here now: the way in is what you came for.
   const home = hits.find((h) => h.kind === 'contact' && h.residency === 'active');
-  const codes = home?.kind === 'contact' && home.placeId ? <EntryCodes placeId={home.placeId} /> : null;
+  const codes = home?.kind === 'contact' && home.placeId ? <PlaceEntryCodes placeId={home.placeId} /> : null;
   if (single) return <>{codes}<HitDetail hit={single} onAction={onAction} onOpenPlace={onOpenPlace} /></>;
 
   return (

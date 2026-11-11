@@ -6,7 +6,7 @@ import { describeHit, hitActions, type HitAction } from '@lupira/maps-domain/map
 import type { MapHit } from '@lupira/maps-domain/mapHits';
 import { MAP_COLORS, type MapTheme } from '@danbro96/lupira-tokens-map/map';
 import { Button } from '@danbro96/lupira-expo-paper/components/Button';
-import { EntryCodes } from '../components/EntryCodes';
+import { PlaceEntryCodes } from '../components/PlaceEntryCodes';
 import { Sheet } from '../components/Sheet';
 import { avatarColor } from '@danbro96/lupira-tokens-calendar/kinds';
 import { ICONS } from '../icons';
@@ -28,7 +28,7 @@ export function MapPreviewSheet({ hits, theme, onAction, onDismiss }: {
   const home = hits.find((h) => h.kind === 'contact' && h.residency === 'active');
   return (
     <Sheet title={single ? undefined : `${hits.length} things here`} onDismiss={onDismiss}>
-      {home?.kind === 'contact' && <EntryCodes placeId={home.placeId} />}
+      {home?.kind === 'contact' && <PlaceEntryCodes placeId={home.placeId} />}
       {single ? (
         <HitCard hit={single} theme={theme} onAction={onAction} />
       ) : (

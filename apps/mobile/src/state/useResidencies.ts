@@ -1,10 +1,13 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { randomUUID } from 'expo-crypto';
 import { ApiError } from '@danbro96/lupira-http/apiError';
 import { onlineQuery } from '@danbro96/lupira-expo-query/onlineQuery';
 import { residencyStatus } from '@danbro96/lupira-domain-contacts/fuzzyDate';
 import { parentsHomes, type ContactAddressRow, type ParentsHome } from '@danbro96/lupira-domain-contacts/residents';
-import { getPlaceEntry, listContactRelations, listResidencies, searchContacts } from '@lupira/maps-api/fetch/contact';
-import type { PlaceEntryDto } from '@lupira/maps-api/models';
+import {
+  getPlaceEntry, listContactRelations, listResidencies, removeEntryCode, searchContacts, setEntryCode,
+} from '@lupira/maps-api/fetch/contact';
+import type { EntryCodeDto } from '@lupira/maps-api/models';
 
 /** Every readable contact's residencies as `@danbro96/lupira-domain-contacts/residents` rows (named). One pair of
  *  queries serves the map, quick places and the preview sheet, so they agree and share one place lookup. */
@@ -33,12 +36,14 @@ export function useParentsHomes(contactId: string | null, rows: readonly Contact
   return parentsHomes(contactId, parents, rows);
 }
 
-/** A place's door codes, shown only while someone you can see lives there now. The server answers 404 when nobody
- *  does, which is an empty answer here, not an error. */
-export function usePlaceEntry(placeId: string | null | undefined, rows: readonly ContactAddressRow[]): PlaceEntryDto | null {
+const placeEntryKey = (placeId: string | null | undefined) => ['contacts', 'place-entry', placeId];
+
+/** A place's door codes, kept only while someone you can see lives there now (`canAdd`). The server answers 404 when
+ *  nobody does, which is an empty answer here, not an error. */
+export function usePlaceEntry(placeId: string | null | undefined, rows: readonly ContactAddressRow[]): { codes: EntryCodeDto[]; canAdd: boolean } {
   const lived = rows.some((r) => r.placeId === placeId && residencyStatus(r.movedIn, r.movedOut) === 'active');
   const q = useQuery({
-    ...onlineQuery(['contacts', 'place-entry', placeId], async () => {
+    ...onlineQuery(placeEntryKey(placeId), async () => {
       try {
         return await getPlaceEntry(placeId!);
       } catch (e) {
@@ -49,5 +54,23 @@ export function usePlaceEntry(placeId: string | null | undefined, rows: readonly
     enabled: !!placeId && lived,
     retry: false,
   });
-  return lived && q.data && q.data.codes.length > 0 ? q.data : null;
+  const entry = lived ? q.data : null;
+  return { codes: entry?.codes ?? [], canAdd: !!entry };
+}
+
+export function useSetEntryCode() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ placeId, code: { id, ...data } }: { placeId: string; code: { id: string | null; label: string; code: string; note: string | null } }) =>
+      setEntryCode(placeId, id ?? randomUUID(), data),
+    onSuccess: (_, { placeId }) => queryClient.invalidateQueries({ queryKey: placeEntryKey(placeId) }),
+  });
+}
+
+export function useRemoveEntryCode() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ placeId, codeId }: { placeId: string; codeId: string }) => removeEntryCode(placeId, codeId),
+    onSuccess: (_, { placeId }) => queryClient.invalidateQueries({ queryKey: placeEntryKey(placeId) }),
+  });
 }
