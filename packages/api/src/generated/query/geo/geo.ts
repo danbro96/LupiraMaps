@@ -144,6 +144,7 @@ export type SearchPlacesQueryResult = NonNullable<Awaited<ReturnType<typeof sear
 export type SearchPlacesQueryError = ProblemDetails
 
 
+/** @summary Search the gazetteer: text (q, trigram), category/kind, containment (withinAreaId), curation state (hasCoordinates/source/verified — hasCoordinates=false lists unlocated stubs), and spatial — proximity (nearLat+nearLon[+radiusM], returns distanceM) or viewport (bbox=minLon&bbox=minLat&bbox=maxLon&bbox=maxLat). */
 export function useSearchPlaces<TData = Awaited<ReturnType<typeof searchPlaces>>, TError = ProblemDetails>(
  params: undefined |  SearchPlacesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof searchPlaces>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -154,6 +155,7 @@ export function useSearchPlaces<TData = Awaited<ReturnType<typeof searchPlaces>>
       >, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Search the gazetteer: text (q, trigram), category/kind, containment (withinAreaId), curation state (hasCoordinates/source/verified — hasCoordinates=false lists unlocated stubs), and spatial — proximity (nearLat+nearLon[+radiusM], returns distanceM) or viewport (bbox=minLon&bbox=minLat&bbox=maxLon&bbox=maxLat). */
 export function useSearchPlaces<TData = Awaited<ReturnType<typeof searchPlaces>>, TError = ProblemDetails>(
  params?: SearchPlacesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof searchPlaces>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -164,14 +166,12 @@ export function useSearchPlaces<TData = Awaited<ReturnType<typeof searchPlaces>>
       >, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Search the gazetteer: text (q, trigram), category/kind, containment (withinAreaId), curation state (hasCoordinates/source/verified — hasCoordinates=false lists unlocated stubs), and spatial — proximity (nearLat+nearLon[+radiusM], returns distanceM) or viewport (bbox=minLon&bbox=minLat&bbox=maxLon&bbox=maxLat). */
 export function useSearchPlaces<TData = Awaited<ReturnType<typeof searchPlaces>>, TError = ProblemDetails>(
  params?: SearchPlacesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof searchPlaces>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Search the gazetteer: text (q, trigram), category/kind, containment (withinAreaId), curation state (hasCoordinates/source/verified — hasCoordinates=false lists unlocated stubs), and spatial — proximity (nearLat+nearLon[+radiusM], returns distanceM) or viewport (bbox=minLon&bbox=minLat&bbox=maxLon&bbox=maxLat).
- */
-
+/** @summary Search the gazetteer: text (q, trigram), category/kind, containment (withinAreaId), curation state (hasCoordinates/source/verified — hasCoordinates=false lists unlocated stubs), and spatial — proximity (nearLat+nearLon[+radiusM], returns distanceM) or viewport (bbox=minLon&bbox=minLat&bbox=maxLon&bbox=maxLat). */
 export function useSearchPlaces<TData = Awaited<ReturnType<typeof searchPlaces>>, TError = ProblemDetails>(
  params?: SearchPlacesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof searchPlaces>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
@@ -263,9 +263,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type CreatePlaceMutationError = ProblemDetails
     export type CreatePlaceMutationVariables = {data: CreatePlaceRequest}
 
-    /**
- * @summary Create a user place directly (name + optional coordinates/category).
- */
+    /** @summary Create a user place directly (name + optional coordinates/category). */
 export const useCreatePlace = <TError = ProblemDetails,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPlace>>, TError,CreatePlaceMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient): UseMutationResult<
@@ -338,6 +336,7 @@ export type SuggestPlacesQueryResult = NonNullable<Awaited<ReturnType<typeof sug
 export type SuggestPlacesQueryError = ProblemDetails
 
 
+/** @summary Typeahead: trigram-ranked suggestions over places (names + aliases) and AdminArea localities, discriminated by type. */
 export function useSuggestPlaces<TData = Awaited<ReturnType<typeof suggestPlaces>>, TError = ProblemDetails>(
  params: SuggestPlacesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof suggestPlaces>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -348,6 +347,7 @@ export function useSuggestPlaces<TData = Awaited<ReturnType<typeof suggestPlaces
       >, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Typeahead: trigram-ranked suggestions over places (names + aliases) and AdminArea localities, discriminated by type. */
 export function useSuggestPlaces<TData = Awaited<ReturnType<typeof suggestPlaces>>, TError = ProblemDetails>(
  params: SuggestPlacesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof suggestPlaces>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -358,14 +358,12 @@ export function useSuggestPlaces<TData = Awaited<ReturnType<typeof suggestPlaces
       >, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Typeahead: trigram-ranked suggestions over places (names + aliases) and AdminArea localities, discriminated by type. */
 export function useSuggestPlaces<TData = Awaited<ReturnType<typeof suggestPlaces>>, TError = ProblemDetails>(
  params: SuggestPlacesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof suggestPlaces>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Typeahead: trigram-ranked suggestions over places (names + aliases) and AdminArea localities, discriminated by type.
- */
-
+/** @summary Typeahead: trigram-ranked suggestions over places (names + aliases) and AdminArea localities, discriminated by type. */
 export function useSuggestPlaces<TData = Awaited<ReturnType<typeof suggestPlaces>>, TError = ProblemDetails>(
  params: SuggestPlacesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof suggestPlaces>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
@@ -438,6 +436,7 @@ export type GetPlaceHistoryQueryResult = NonNullable<Awaited<ReturnType<typeof g
 export type GetPlaceHistoryQueryError = ProblemDetails
 
 
+/** @summary The append-only curation log for a place, oldest first. Readable for tombstoned/merged places; 404 only for unknown ids. */
 export function useGetPlaceHistory<TData = Awaited<ReturnType<typeof getPlaceHistory>>, TError = ProblemDetails>(
  id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlaceHistory>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -448,6 +447,7 @@ export function useGetPlaceHistory<TData = Awaited<ReturnType<typeof getPlaceHis
       >, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary The append-only curation log for a place, oldest first. Readable for tombstoned/merged places; 404 only for unknown ids. */
 export function useGetPlaceHistory<TData = Awaited<ReturnType<typeof getPlaceHistory>>, TError = ProblemDetails>(
  id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlaceHistory>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -458,14 +458,12 @@ export function useGetPlaceHistory<TData = Awaited<ReturnType<typeof getPlaceHis
       >, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary The append-only curation log for a place, oldest first. Readable for tombstoned/merged places; 404 only for unknown ids. */
 export function useGetPlaceHistory<TData = Awaited<ReturnType<typeof getPlaceHistory>>, TError = ProblemDetails>(
  id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlaceHistory>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary The append-only curation log for a place, oldest first. Readable for tombstoned/merged places; 404 only for unknown ids.
- */
-
+/** @summary The append-only curation log for a place, oldest first. Readable for tombstoned/merged places; 404 only for unknown ids. */
 export function useGetPlaceHistory<TData = Awaited<ReturnType<typeof getPlaceHistory>>, TError = ProblemDetails>(
  id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlaceHistory>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
@@ -538,6 +536,7 @@ export type GetPlaceQueryResult = NonNullable<Awaited<ReturnType<typeof getPlace
 export type GetPlaceQueryError = ProblemDetails
 
 
+/** @summary A single place with its aliases, external ids, and containment chain (outermost→innermost). Follows merge redirects. */
 export function useGetPlace<TData = Awaited<ReturnType<typeof getPlace>>, TError = ProblemDetails>(
  id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlace>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -548,6 +547,7 @@ export function useGetPlace<TData = Awaited<ReturnType<typeof getPlace>>, TError
       >, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary A single place with its aliases, external ids, and containment chain (outermost→innermost). Follows merge redirects. */
 export function useGetPlace<TData = Awaited<ReturnType<typeof getPlace>>, TError = ProblemDetails>(
  id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlace>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -558,14 +558,12 @@ export function useGetPlace<TData = Awaited<ReturnType<typeof getPlace>>, TError
       >, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary A single place with its aliases, external ids, and containment chain (outermost→innermost). Follows merge redirects. */
 export function useGetPlace<TData = Awaited<ReturnType<typeof getPlace>>, TError = ProblemDetails>(
  id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlace>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary A single place with its aliases, external ids, and containment chain (outermost→innermost). Follows merge redirects.
- */
-
+/** @summary A single place with its aliases, external ids, and containment chain (outermost→innermost). Follows merge redirects. */
 export function useGetPlace<TData = Awaited<ReturnType<typeof getPlace>>, TError = ProblemDetails>(
  id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlace>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
@@ -658,9 +656,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type UpdatePlaceMutationError = ProblemDetails
     export type UpdatePlaceMutationVariables = {id: string;data: UpdatePlaceRequest}
 
-    /**
- * @summary Curate a place: rename, recategorize, or verify.
- */
+    /** @summary Curate a place: rename, recategorize, or verify. */
 export const useUpdatePlace = <TError = ProblemDetails,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePlace>>, TError,UpdatePlaceMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient): UseMutationResult<
@@ -740,9 +736,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type RegeocodePlaceMutationError = ProblemDetails
     export type RegeocodePlaceMutationVariables = {id: string;params?: RegeocodePlaceParams}
 
-    /**
- * @summary Re-geocode a place from its address/name and attach coordinates, containment, and OSM id — heals a coordinate-less stub or refreshes a stale fix. A frozen empty geocode answer is always re-asked; force=true also bypasses and overwrites frozen hits. 400 on a no-hit or transient geocoder outage; the place is left unchanged.
- */
+    /** @summary Re-geocode a place from its address/name and attach coordinates, containment, and OSM id — heals a coordinate-less stub or refreshes a stale fix. A frozen empty geocode answer is always re-asked; force=true also bypasses and overwrites frozen hits. 400 on a no-hit or transient geocoder outage; the place is left unchanged. */
 export const useRegeocodePlace = <TError = ProblemDetails,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof regeocodePlace>>, TError,RegeocodePlaceMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient): UseMutationResult<
@@ -827,9 +821,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type LookupPlacesMutationError = ProblemDetails
     export type LookupPlacesMutationVariables = {data: LookupPlacesRequest}
 
-    /**
- * @summary Bulk get-by-ids (max 200) — hydrate stored place ids into coordinates in one call. Responses align index-for-index; a null place means unknown or deleted, a merged id returns the survivor. Containment is omitted (use GET /places/{id} for detail).
- */
+    /** @summary Bulk get-by-ids (max 200) — hydrate stored place ids into coordinates in one call. Responses align index-for-index; a null place means unknown or deleted, a merged id returns the survivor. Containment is omitted (use GET /places/{id} for detail). */
 export const useLookupPlaces = <TError = ProblemDetails,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof lookupPlaces>>, TError,LookupPlacesMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient): UseMutationResult<
@@ -914,9 +906,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type CreatePlaceFromPinMutationError = ProblemDetails
     export type CreatePlaceFromPinMutationVariables = {data: CreatePlaceFromPinRequest}
 
-    /**
- * @summary Create a place at a dropped pin (exact coordinates), or match one within 25 m with a similar name (resolution Matched/Created). Address and containment come from a building-precision reverse geocode; name defaults to "Street HouseNumber, Locality" at the pin, else its coordinates. Created even when the geocoder is down.
- */
+    /** @summary Create a place at a dropped pin (exact coordinates), or match one within 25 m with a similar name (resolution Matched/Created). Address and containment come from a building-precision reverse geocode; name defaults to "Street HouseNumber, Locality" at the pin, else its coordinates. Created even when the geocoder is down. */
 export const useCreatePlaceFromPin = <TError = ProblemDetails,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPlaceFromPin>>, TError,CreatePlaceFromPinMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient): UseMutationResult<
@@ -982,6 +972,7 @@ export type FindOrphanPlacesQueryResult = NonNullable<Awaited<ReturnType<typeof 
 export type FindOrphanPlacesQueryError = ProblemDetails
 
 
+/** @summary Live places nothing references — cross-checked against contact addresses, calendar items (live + deleted counted separately), and saved places. Fails 400 when a reference source is unreachable (never declares orphans on partial data). */
 export function useFindOrphanPlaces<TData = Awaited<ReturnType<typeof findOrphanPlaces>>, TError = ProblemDetails>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof findOrphanPlaces>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -992,6 +983,7 @@ export function useFindOrphanPlaces<TData = Awaited<ReturnType<typeof findOrphan
       >, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Live places nothing references — cross-checked against contact addresses, calendar items (live + deleted counted separately), and saved places. Fails 400 when a reference source is unreachable (never declares orphans on partial data). */
 export function useFindOrphanPlaces<TData = Awaited<ReturnType<typeof findOrphanPlaces>>, TError = ProblemDetails>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof findOrphanPlaces>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -1002,14 +994,12 @@ export function useFindOrphanPlaces<TData = Awaited<ReturnType<typeof findOrphan
       >, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Live places nothing references — cross-checked against contact addresses, calendar items (live + deleted counted separately), and saved places. Fails 400 when a reference source is unreachable (never declares orphans on partial data). */
 export function useFindOrphanPlaces<TData = Awaited<ReturnType<typeof findOrphanPlaces>>, TError = ProblemDetails>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof findOrphanPlaces>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Live places nothing references — cross-checked against contact addresses, calendar items (live + deleted counted separately), and saved places. Fails 400 when a reference source is unreachable (never declares orphans on partial data).
- */
-
+/** @summary Live places nothing references — cross-checked against contact addresses, calendar items (live + deleted counted separately), and saved places. Fails 400 when a reference source is unreachable (never declares orphans on partial data). */
 export function useFindOrphanPlaces<TData = Awaited<ReturnType<typeof findOrphanPlaces>>, TError = ProblemDetails>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof findOrphanPlaces>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
@@ -1101,9 +1091,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type PrunePlacesMutationError = ProblemDetails
     export type PrunePlacesMutationVariables = {data: PrunePlacesRequest}
 
-    /**
- * @summary Soft-delete orphan places (max 100 per call). References are re-checked per id at prune time; a place referenced since the find returns Referenced and is left alone. Places referenced only by soft-deleted calendar items are never pruned here — use DELETE /places/{id} to override.
- */
+    /** @summary Soft-delete orphan places (max 100 per call). References are re-checked per id at prune time; a place referenced since the find returns Referenced and is left alone. Places referenced only by soft-deleted calendar items are never pruned here — use DELETE /places/{id} to override. */
 export const usePrunePlaces = <TError = ProblemDetails,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof prunePlaces>>, TError,PrunePlacesMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient): UseMutationResult<
@@ -1176,6 +1164,7 @@ export type ReverseGeocodeQueryResult = NonNullable<Awaited<ReturnType<typeof re
 export type ReverseGeocodeQueryError = ProblemDetails
 
 
+/** @summary Coordinate → label + structured address (cached). precision=Area (default) shares one answer per ~100 m cell; precision=Building per ~11 m cell at building zoom. */
 export function useReverseGeocode<TData = Awaited<ReturnType<typeof reverseGeocode>>, TError = ProblemDetails>(
  params: ReverseGeocodeParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof reverseGeocode>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -1186,6 +1175,7 @@ export function useReverseGeocode<TData = Awaited<ReturnType<typeof reverseGeoco
       >, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Coordinate → label + structured address (cached). precision=Area (default) shares one answer per ~100 m cell; precision=Building per ~11 m cell at building zoom. */
 export function useReverseGeocode<TData = Awaited<ReturnType<typeof reverseGeocode>>, TError = ProblemDetails>(
  params: ReverseGeocodeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof reverseGeocode>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -1196,14 +1186,12 @@ export function useReverseGeocode<TData = Awaited<ReturnType<typeof reverseGeoco
       >, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Coordinate → label + structured address (cached). precision=Area (default) shares one answer per ~100 m cell; precision=Building per ~11 m cell at building zoom. */
 export function useReverseGeocode<TData = Awaited<ReturnType<typeof reverseGeocode>>, TError = ProblemDetails>(
  params: ReverseGeocodeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof reverseGeocode>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Coordinate → label + structured address (cached). precision=Area (default) shares one answer per ~100 m cell; precision=Building per ~11 m cell at building zoom.
- */
-
+/** @summary Coordinate → label + structured address (cached). precision=Area (default) shares one answer per ~100 m cell; precision=Building per ~11 m cell at building zoom. */
 export function useReverseGeocode<TData = Awaited<ReturnType<typeof reverseGeocode>>, TError = ProblemDetails>(
  params: ReverseGeocodeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof reverseGeocode>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
@@ -1283,6 +1271,7 @@ export type ForwardGeocodeQueryResult = NonNullable<Awaited<ReturnType<typeof fo
 export type ForwardGeocodeQueryError = ProblemDetails
 
 
+/** @summary Address/place → candidate coordinates + structured address. Pass q (free text) or structured fields (street with optional house number, postcode, locality, countryCode; street, or postcode+locality, required). intent=Search (default) resolves via the canonical geocoder (cached) with address autocomplete as a second source; intent=Typeahead asks the address autocomplete only, uncached, biased toward nearLat/nearLon. limit 1–20 (default 5). */
 export function useForwardGeocode<TData = Awaited<ReturnType<typeof forwardGeocode>>, TError = ProblemDetails>(
  params: undefined |  ForwardGeocodeParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof forwardGeocode>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -1293,6 +1282,7 @@ export function useForwardGeocode<TData = Awaited<ReturnType<typeof forwardGeoco
       >, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Address/place → candidate coordinates + structured address. Pass q (free text) or structured fields (street with optional house number, postcode, locality, countryCode; street, or postcode+locality, required). intent=Search (default) resolves via the canonical geocoder (cached) with address autocomplete as a second source; intent=Typeahead asks the address autocomplete only, uncached, biased toward nearLat/nearLon. limit 1–20 (default 5). */
 export function useForwardGeocode<TData = Awaited<ReturnType<typeof forwardGeocode>>, TError = ProblemDetails>(
  params?: ForwardGeocodeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof forwardGeocode>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -1303,14 +1293,12 @@ export function useForwardGeocode<TData = Awaited<ReturnType<typeof forwardGeoco
       >, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Address/place → candidate coordinates + structured address. Pass q (free text) or structured fields (street with optional house number, postcode, locality, countryCode; street, or postcode+locality, required). intent=Search (default) resolves via the canonical geocoder (cached) with address autocomplete as a second source; intent=Typeahead asks the address autocomplete only, uncached, biased toward nearLat/nearLon. limit 1–20 (default 5). */
 export function useForwardGeocode<TData = Awaited<ReturnType<typeof forwardGeocode>>, TError = ProblemDetails>(
  params?: ForwardGeocodeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof forwardGeocode>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Address/place → candidate coordinates + structured address. Pass q (free text) or structured fields (street with optional house number, postcode, locality, countryCode; street, or postcode+locality, required). intent=Search (default) resolves via the canonical geocoder (cached) with address autocomplete as a second source; intent=Typeahead asks the address autocomplete only, uncached, biased toward nearLat/nearLon. limit 1–20 (default 5).
- */
-
+/** @summary Address/place → candidate coordinates + structured address. Pass q (free text) or structured fields (street with optional house number, postcode, locality, countryCode; street, or postcode+locality, required). intent=Search (default) resolves via the canonical geocoder (cached) with address autocomplete as a second source; intent=Typeahead asks the address autocomplete only, uncached, biased toward nearLat/nearLon. limit 1–20 (default 5). */
 export function useForwardGeocode<TData = Awaited<ReturnType<typeof forwardGeocode>>, TError = ProblemDetails>(
  params?: ForwardGeocodeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof forwardGeocode>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
@@ -1383,6 +1371,7 @@ export type ListSavedPlacesQueryResult = NonNullable<Awaited<ReturnType<typeof l
 export type ListSavedPlacesQueryError = ProblemDetails
 
 
+/** @summary The caller's saved places / personal labels (favorites first). */
 export function useListSavedPlaces<TData = Awaited<ReturnType<typeof listSavedPlaces>>, TError = ProblemDetails>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSavedPlaces>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -1393,6 +1382,7 @@ export function useListSavedPlaces<TData = Awaited<ReturnType<typeof listSavedPl
       >, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary The caller's saved places / personal labels (favorites first). */
 export function useListSavedPlaces<TData = Awaited<ReturnType<typeof listSavedPlaces>>, TError = ProblemDetails>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSavedPlaces>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -1403,14 +1393,12 @@ export function useListSavedPlaces<TData = Awaited<ReturnType<typeof listSavedPl
       >, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary The caller's saved places / personal labels (favorites first). */
 export function useListSavedPlaces<TData = Awaited<ReturnType<typeof listSavedPlaces>>, TError = ProblemDetails>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSavedPlaces>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary The caller's saved places / personal labels (favorites first).
- */
-
+/** @summary The caller's saved places / personal labels (favorites first). */
 export function useListSavedPlaces<TData = Awaited<ReturnType<typeof listSavedPlaces>>, TError = ProblemDetails>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSavedPlaces>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
@@ -1502,9 +1490,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type CreateSavedPlaceMutationError = ProblemDetails
     export type CreateSavedPlaceMutationVariables = {data: CreateSavedPlaceRequest}
 
-    /**
- * @summary Save a place with a personal label (references a gazetteer place, or a raw coordinate).
- */
+    /** @summary Save a place with a personal label (references a gazetteer place, or a raw coordinate). */
 export const useCreateSavedPlace = <TError = ProblemDetails,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSavedPlace>>, TError,CreateSavedPlaceMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient): UseMutationResult<
@@ -1590,9 +1576,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type UpdateSavedPlaceMutationError = ProblemDetails
     export type UpdateSavedPlaceMutationVariables = {id: string;data: UpdateSavedPlaceRequest}
 
-    /**
- * @summary Rename, annotate, or (un)favorite a saved place.
- */
+    /** @summary Rename, annotate, or (un)favorite a saved place. */
 export const useUpdateSavedPlace = <TError = ProblemDetails,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSavedPlace>>, TError,UpdateSavedPlaceMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient): UseMutationResult<
@@ -1663,9 +1647,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type DeleteSavedPlaceMutationError = ProblemDetails
     export type DeleteSavedPlaceMutationVariables = {id: string}
 
-    /**
- * @summary Remove a saved place.
- */
+    /** @summary Remove a saved place. */
 export const useDeleteSavedPlace = <TError = ProblemDetails,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteSavedPlace>>, TError,DeleteSavedPlaceMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient): UseMutationResult<

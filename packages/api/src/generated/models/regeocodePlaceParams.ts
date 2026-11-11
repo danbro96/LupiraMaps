@@ -6,5 +6,5 @@
  */
 
 export type RegeocodePlaceParams = {
-force?: boolean;
+  force?: boolean;
 };

@@ -6,6 +6,6 @@
  */
 
 export type ListTripsParams = {
-from?: string;
-to?: string;
+  from?: string;
+  to?: string;
 };

@@ -6,8 +6,8 @@
  */
 
 export type GetThinnedTrackParams = {
-from?: string;
-to?: string;
-bucketSeconds?: number;
-deviceId?: string;
+  from?: string;
+  to?: string;
+  bucketSeconds?: number;
+  deviceId?: string;
 };

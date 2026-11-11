@@ -6,5 +6,5 @@
  */
 
 export type GetCurrentLocationParams = {
-deviceId?: string;
+  deviceId?: string;
 };

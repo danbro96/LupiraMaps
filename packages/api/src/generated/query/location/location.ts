@@ -138,9 +138,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type RegisterDeviceMutationError = ProblemDetails
     export type RegisterDeviceMutationVariables = {data: RegisterDeviceRequest}
 
-    /**
- * @summary Register a device; returns the one-time ingest API key.
- */
+    /** @summary Register a device; returns the one-time ingest API key. */
 export const useRegisterDevice = <TError = ProblemDetails,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerDevice>>, TError,RegisterDeviceMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient): UseMutationResult<
@@ -211,9 +209,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type RetireDeviceMutationError = ProblemDetails
     export type RetireDeviceMutationVariables = {id: string}
 
-    /**
- * @summary Retire a device (revokes its ingest keys).
- */
+    /** @summary Retire a device (revokes its ingest keys). */
 export const useRetireDevice = <TError = ProblemDetails,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof retireDevice>>, TError,RetireDeviceMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient): UseMutationResult<
@@ -286,6 +282,7 @@ export type GetCurrentLocationQueryResult = NonNullable<Awaited<ReturnType<typeo
 export type GetCurrentLocationQueryError = ProblemDetails
 
 
+/** @summary Latest known location per device. */
 export function useGetCurrentLocation<TData = Awaited<ReturnType<typeof getCurrentLocation>>, TError = ProblemDetails>(
  params: undefined |  GetCurrentLocationParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCurrentLocation>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -296,6 +293,7 @@ export function useGetCurrentLocation<TData = Awaited<ReturnType<typeof getCurre
       >, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Latest known location per device. */
 export function useGetCurrentLocation<TData = Awaited<ReturnType<typeof getCurrentLocation>>, TError = ProblemDetails>(
  params?: GetCurrentLocationParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCurrentLocation>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -306,14 +304,12 @@ export function useGetCurrentLocation<TData = Awaited<ReturnType<typeof getCurre
       >, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Latest known location per device. */
 export function useGetCurrentLocation<TData = Awaited<ReturnType<typeof getCurrentLocation>>, TError = ProblemDetails>(
  params?: GetCurrentLocationParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCurrentLocation>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Latest known location per device.
- */
-
+/** @summary Latest known location per device. */
 export function useGetCurrentLocation<TData = Awaited<ReturnType<typeof getCurrentLocation>>, TError = ProblemDetails>(
  params?: GetCurrentLocationParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCurrentLocation>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
@@ -393,6 +389,7 @@ export type GetThinnedTrackQueryResult = NonNullable<Awaited<ReturnType<typeof g
 export type GetThinnedTrackQueryError = ProblemDetails
 
 
+/** @summary Server-downsampled track (one best-accuracy fix per time bucket). */
 export function useGetThinnedTrack<TData = Awaited<ReturnType<typeof getThinnedTrack>>, TError = ProblemDetails>(
  params: undefined |  GetThinnedTrackParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getThinnedTrack>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -403,6 +400,7 @@ export function useGetThinnedTrack<TData = Awaited<ReturnType<typeof getThinnedT
       >, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Server-downsampled track (one best-accuracy fix per time bucket). */
 export function useGetThinnedTrack<TData = Awaited<ReturnType<typeof getThinnedTrack>>, TError = ProblemDetails>(
  params?: GetThinnedTrackParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getThinnedTrack>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -413,14 +411,12 @@ export function useGetThinnedTrack<TData = Awaited<ReturnType<typeof getThinnedT
       >, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Server-downsampled track (one best-accuracy fix per time bucket). */
 export function useGetThinnedTrack<TData = Awaited<ReturnType<typeof getThinnedTrack>>, TError = ProblemDetails>(
  params?: GetThinnedTrackParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getThinnedTrack>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Server-downsampled track (one best-accuracy fix per time bucket).
- */
-
+/** @summary Server-downsampled track (one best-accuracy fix per time bucket). */
 export function useGetThinnedTrack<TData = Awaited<ReturnType<typeof getThinnedTrack>>, TError = ProblemDetails>(
  params?: GetThinnedTrackParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getThinnedTrack>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
@@ -500,6 +496,7 @@ export type ListVisitsQueryResult = NonNullable<Awaited<ReturnType<typeof listVi
 export type ListVisitsQueryError = ProblemDetails
 
 
+/** @summary Materialized stay-points over a time range. */
 export function useListVisits<TData = Awaited<ReturnType<typeof listVisits>>, TError = ProblemDetails>(
  params: undefined |  ListVisitsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listVisits>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -510,6 +507,7 @@ export function useListVisits<TData = Awaited<ReturnType<typeof listVisits>>, TE
       >, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Materialized stay-points over a time range. */
 export function useListVisits<TData = Awaited<ReturnType<typeof listVisits>>, TError = ProblemDetails>(
  params?: ListVisitsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listVisits>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -520,14 +518,12 @@ export function useListVisits<TData = Awaited<ReturnType<typeof listVisits>>, TE
       >, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Materialized stay-points over a time range. */
 export function useListVisits<TData = Awaited<ReturnType<typeof listVisits>>, TError = ProblemDetails>(
  params?: ListVisitsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listVisits>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Materialized stay-points over a time range.
- */
-
+/** @summary Materialized stay-points over a time range. */
 export function useListVisits<TData = Awaited<ReturnType<typeof listVisits>>, TError = ProblemDetails>(
  params?: ListVisitsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listVisits>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
@@ -607,6 +603,7 @@ export type ListTripsQueryResult = NonNullable<Awaited<ReturnType<typeof listTri
 export type ListTripsQueryError = ProblemDetails
 
 
+/** @summary Materialized trips over a time range. */
 export function useListTrips<TData = Awaited<ReturnType<typeof listTrips>>, TError = ProblemDetails>(
  params: undefined |  ListTripsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTrips>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -617,6 +614,7 @@ export function useListTrips<TData = Awaited<ReturnType<typeof listTrips>>, TErr
       >, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Materialized trips over a time range. */
 export function useListTrips<TData = Awaited<ReturnType<typeof listTrips>>, TError = ProblemDetails>(
  params?: ListTripsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTrips>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -627,14 +625,12 @@ export function useListTrips<TData = Awaited<ReturnType<typeof listTrips>>, TErr
       >, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Materialized trips over a time range. */
 export function useListTrips<TData = Awaited<ReturnType<typeof listTrips>>, TError = ProblemDetails>(
  params?: ListTripsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTrips>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Materialized trips over a time range.
- */
-
+/** @summary Materialized trips over a time range. */
 export function useListTrips<TData = Awaited<ReturnType<typeof listTrips>>, TError = ProblemDetails>(
  params?: ListTripsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTrips>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
@@ -719,9 +715,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type PurgeLocationHistoryMutationError = ProblemDetails
     export type PurgeLocationHistoryMutationVariables = {params?: PurgeLocationHistoryParams}
 
-    /**
- * @summary Purge raw fixes + derived docs in a time range (owner erase).
- */
+    /** @summary Purge raw fixes + derived docs in a time range (owner erase). */
 export const usePurgeLocationHistory = <TError = ProblemDetails,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof purgeLocationHistory>>, TError,PurgeLocationHistoryMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient): UseMutationResult<

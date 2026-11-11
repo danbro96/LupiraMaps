@@ -110,6 +110,7 @@ export type ListContainersQueryResult = NonNullable<Awaited<ReturnType<typeof li
 export type ListContainersQueryError = ProblemDetails
 
 
+/** @summary List the calendars the caller can access. */
 export function useListContainers<TData = Awaited<ReturnType<typeof listContainers>>, TError = ProblemDetails>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listContainers>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -120,6 +121,7 @@ export function useListContainers<TData = Awaited<ReturnType<typeof listContaine
       >, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary List the calendars the caller can access. */
 export function useListContainers<TData = Awaited<ReturnType<typeof listContainers>>, TError = ProblemDetails>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listContainers>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -130,14 +132,12 @@ export function useListContainers<TData = Awaited<ReturnType<typeof listContaine
       >, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary List the calendars the caller can access. */
 export function useListContainers<TData = Awaited<ReturnType<typeof listContainers>>, TError = ProblemDetails>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listContainers>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary List the calendars the caller can access.
- */
-
+/** @summary List the calendars the caller can access. */
 export function useListContainers<TData = Awaited<ReturnType<typeof listContainers>>, TError = ProblemDetails>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listContainers>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
@@ -217,6 +217,7 @@ export type SearchItemsQueryResult = NonNullable<Awaited<ReturnType<typeof searc
 export type SearchItemsQueryError = ProblemDetails
 
 
+/** @summary Search calendar items (text + tag + parent + attendee contact + category/status filter; recurrence expanded in-window; from/to match occurrences overlapping the window). Text queries and parent/contact filters with no from/to match all-time; otherwise the window defaults to ±1 year. skip/take page over occurrences sorted by start (desc=true for newest first). Only items accepted into a calendar you can read. */
 export function useSearchItems<TData = Awaited<ReturnType<typeof searchItems>>, TError = ProblemDetails>(
  params: undefined |  SearchItemsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof searchItems>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -227,6 +228,7 @@ export function useSearchItems<TData = Awaited<ReturnType<typeof searchItems>>, 
       >, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Search calendar items (text + tag + parent + attendee contact + category/status filter; recurrence expanded in-window; from/to match occurrences overlapping the window). Text queries and parent/contact filters with no from/to match all-time; otherwise the window defaults to ±1 year. skip/take page over occurrences sorted by start (desc=true for newest first). Only items accepted into a calendar you can read. */
 export function useSearchItems<TData = Awaited<ReturnType<typeof searchItems>>, TError = ProblemDetails>(
  params?: SearchItemsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof searchItems>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -237,14 +239,12 @@ export function useSearchItems<TData = Awaited<ReturnType<typeof searchItems>>, 
       >, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Search calendar items (text + tag + parent + attendee contact + category/status filter; recurrence expanded in-window; from/to match occurrences overlapping the window). Text queries and parent/contact filters with no from/to match all-time; otherwise the window defaults to ±1 year. skip/take page over occurrences sorted by start (desc=true for newest first). Only items accepted into a calendar you can read. */
 export function useSearchItems<TData = Awaited<ReturnType<typeof searchItems>>, TError = ProblemDetails>(
  params?: SearchItemsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof searchItems>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Search calendar items (text + tag + parent + attendee contact + category/status filter; recurrence expanded in-window; from/to match occurrences overlapping the window). Text queries and parent/contact filters with no from/to match all-time; otherwise the window defaults to ±1 year. skip/take page over occurrences sorted by start (desc=true for newest first). Only items accepted into a calendar you can read.
- */
-
+/** @summary Search calendar items (text + tag + parent + attendee contact + category/status filter; recurrence expanded in-window; from/to match occurrences overlapping the window). Text queries and parent/contact filters with no from/to match all-time; otherwise the window defaults to ±1 year. skip/take page over occurrences sorted by start (desc=true for newest first). Only items accepted into a calendar you can read. */
 export function useSearchItems<TData = Awaited<ReturnType<typeof searchItems>>, TError = ProblemDetails>(
  params?: SearchItemsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof searchItems>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
@@ -317,6 +317,7 @@ export type GetItemQueryResult = NonNullable<Awaited<ReturnType<typeof getItem>>
 export type GetItemQueryError = ProblemDetails
 
 
+/** @summary Get a single calendar item. */
 export function useGetItem<TData = Awaited<ReturnType<typeof getItem>>, TError = ProblemDetails>(
  id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getItem>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -327,6 +328,7 @@ export function useGetItem<TData = Awaited<ReturnType<typeof getItem>>, TError =
       >, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Get a single calendar item. */
 export function useGetItem<TData = Awaited<ReturnType<typeof getItem>>, TError = ProblemDetails>(
  id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getItem>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -337,14 +339,12 @@ export function useGetItem<TData = Awaited<ReturnType<typeof getItem>>, TError =
       >, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Get a single calendar item. */
 export function useGetItem<TData = Awaited<ReturnType<typeof getItem>>, TError = ProblemDetails>(
  id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getItem>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Get a single calendar item.
- */
-
+/** @summary Get a single calendar item. */
 export function useGetItem<TData = Awaited<ReturnType<typeof getItem>>, TError = ProblemDetails>(
  id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getItem>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
@@ -417,6 +417,7 @@ export type GetItemsByPlaceQueryResult = NonNullable<Awaited<ReturnType<typeof g
 export type GetItemsByPlaceQueryError = ProblemDetails
 
 
+/** @summary Calendar items anchored to a LupiraGeoApi place (its location, or a travel endpoint). Only items in a calendar you can read. */
 export function useGetItemsByPlace<TData = Awaited<ReturnType<typeof getItemsByPlace>>, TError = ProblemDetails>(
  placeId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getItemsByPlace>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -427,6 +428,7 @@ export function useGetItemsByPlace<TData = Awaited<ReturnType<typeof getItemsByP
       >, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Calendar items anchored to a LupiraGeoApi place (its location, or a travel endpoint). Only items in a calendar you can read. */
 export function useGetItemsByPlace<TData = Awaited<ReturnType<typeof getItemsByPlace>>, TError = ProblemDetails>(
  placeId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getItemsByPlace>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -437,14 +439,12 @@ export function useGetItemsByPlace<TData = Awaited<ReturnType<typeof getItemsByP
       >, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Calendar items anchored to a LupiraGeoApi place (its location, or a travel endpoint). Only items in a calendar you can read. */
 export function useGetItemsByPlace<TData = Awaited<ReturnType<typeof getItemsByPlace>>, TError = ProblemDetails>(
  placeId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getItemsByPlace>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Calendar items anchored to a LupiraGeoApi place (its location, or a travel endpoint). Only items in a calendar you can read.
- */
-
+/** @summary Calendar items anchored to a LupiraGeoApi place (its location, or a travel endpoint). Only items in a calendar you can read. */
 export function useGetItemsByPlace<TData = Awaited<ReturnType<typeof getItemsByPlace>>, TError = ProblemDetails>(
  placeId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getItemsByPlace>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
@@ -524,6 +524,7 @@ export type GetHotspotsQueryResult = NonNullable<Awaited<ReturnType<typeof getHo
 export type GetHotspotsQueryError = ProblemDetails
 
 
+/** @summary Places where your events and photos concentrate, derived at read time and ranked by active days (distinct UTC days with an event occurrence or a photo). Events come from calendars you can read (or calendarId), photos are your own. Defaults: all-time up to now, minDays 3, limit 100. A hotspot carries the LupiraGeoApi PlaceId it anchors to, else a reverse-geocoded label. */
 export function useGetHotspots<TData = Awaited<ReturnType<typeof getHotspots>>, TError = ProblemDetails>(
  params: undefined |  GetHotspotsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHotspots>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -534,6 +535,7 @@ export function useGetHotspots<TData = Awaited<ReturnType<typeof getHotspots>>, 
       >, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Places where your events and photos concentrate, derived at read time and ranked by active days (distinct UTC days with an event occurrence or a photo). Events come from calendars you can read (or calendarId), photos are your own. Defaults: all-time up to now, minDays 3, limit 100. A hotspot carries the LupiraGeoApi PlaceId it anchors to, else a reverse-geocoded label. */
 export function useGetHotspots<TData = Awaited<ReturnType<typeof getHotspots>>, TError = ProblemDetails>(
  params?: GetHotspotsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHotspots>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -544,14 +546,12 @@ export function useGetHotspots<TData = Awaited<ReturnType<typeof getHotspots>>, 
       >, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Places where your events and photos concentrate, derived at read time and ranked by active days (distinct UTC days with an event occurrence or a photo). Events come from calendars you can read (or calendarId), photos are your own. Defaults: all-time up to now, minDays 3, limit 100. A hotspot carries the LupiraGeoApi PlaceId it anchors to, else a reverse-geocoded label. */
 export function useGetHotspots<TData = Awaited<ReturnType<typeof getHotspots>>, TError = ProblemDetails>(
  params?: GetHotspotsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHotspots>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Places where your events and photos concentrate, derived at read time and ranked by active days (distinct UTC days with an event occurrence or a photo). Events come from calendars you can read (or calendarId), photos are your own. Defaults: all-time up to now, minDays 3, limit 100. A hotspot carries the LupiraGeoApi PlaceId it anchors to, else a reverse-geocoded label.
- */
-
+/** @summary Places where your events and photos concentrate, derived at read time and ranked by active days (distinct UTC days with an event occurrence or a photo). Events come from calendars you can read (or calendarId), photos are your own. Defaults: all-time up to now, minDays 3, limit 100. A hotspot carries the LupiraGeoApi PlaceId it anchors to, else a reverse-geocoded label. */
 export function useGetHotspots<TData = Awaited<ReturnType<typeof getHotspots>>, TError = ProblemDetails>(
  params?: GetHotspotsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHotspots>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient

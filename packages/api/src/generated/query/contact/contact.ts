@@ -116,6 +116,7 @@ export type GetMeQueryResult = NonNullable<Awaited<ReturnType<typeof getMe>>>
 export type GetMeQueryError = ProblemDetails
 
 
+/** @summary The caller's resolved local identity (JIT-provisioned on first login). While no contact is linked, one carrying the login email in a readable book is linked. */
 export function useGetMe<TData = Awaited<ReturnType<typeof getMe>>, TError = ProblemDetails>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMe>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -126,6 +127,7 @@ export function useGetMe<TData = Awaited<ReturnType<typeof getMe>>, TError = Pro
       >, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary The caller's resolved local identity (JIT-provisioned on first login). While no contact is linked, one carrying the login email in a readable book is linked. */
 export function useGetMe<TData = Awaited<ReturnType<typeof getMe>>, TError = ProblemDetails>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMe>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -136,14 +138,12 @@ export function useGetMe<TData = Awaited<ReturnType<typeof getMe>>, TError = Pro
       >, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary The caller's resolved local identity (JIT-provisioned on first login). While no contact is linked, one carrying the login email in a readable book is linked. */
 export function useGetMe<TData = Awaited<ReturnType<typeof getMe>>, TError = ProblemDetails>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMe>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary The caller's resolved local identity (JIT-provisioned on first login). While no contact is linked, one carrying the login email in a readable book is linked.
- */
-
+/** @summary The caller's resolved local identity (JIT-provisioned on first login). While no contact is linked, one carrying the login email in a readable book is linked. */
 export function useGetMe<TData = Awaited<ReturnType<typeof getMe>>, TError = ProblemDetails>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMe>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
@@ -223,6 +223,7 @@ export type SearchContactsQueryResult = NonNullable<Awaited<ReturnType<typeof se
 export type SearchContactsQueryError = ProblemDetails
 
 
+/** @summary Search contacts by name: every query word is a name part, or the name text contains the query (case/diacritic-insensitive). */
 export function useSearchContacts<TData = Awaited<ReturnType<typeof searchContacts>>, TError = ProblemDetails>(
  params: undefined |  SearchContactsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof searchContacts>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -233,6 +234,7 @@ export function useSearchContacts<TData = Awaited<ReturnType<typeof searchContac
       >, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Search contacts by name: every query word is a name part, or the name text contains the query (case/diacritic-insensitive). */
 export function useSearchContacts<TData = Awaited<ReturnType<typeof searchContacts>>, TError = ProblemDetails>(
  params?: SearchContactsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof searchContacts>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -243,14 +245,12 @@ export function useSearchContacts<TData = Awaited<ReturnType<typeof searchContac
       >, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Search contacts by name: every query word is a name part, or the name text contains the query (case/diacritic-insensitive). */
 export function useSearchContacts<TData = Awaited<ReturnType<typeof searchContacts>>, TError = ProblemDetails>(
  params?: SearchContactsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof searchContacts>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Search contacts by name: every query word is a name part, or the name text contains the query (case/diacritic-insensitive).
- */
-
+/** @summary Search contacts by name: every query word is a name part, or the name text contains the query (case/diacritic-insensitive). */
 export function useSearchContacts<TData = Awaited<ReturnType<typeof searchContacts>>, TError = ProblemDetails>(
  params?: SearchContactsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof searchContacts>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
@@ -334,6 +334,7 @@ export type ListContactRelationsQueryResult = NonNullable<Awaited<ReturnType<typ
 export type ListContactRelationsQueryError = ProblemDetails
 
 
+/** @summary The contact's relationships, identical whichever side stores them: each entry's kind is the other contact's role relative to this one and its label this contact's own name for them. Set includeInferred=true to also return kin derived from the parent/child graph (siblings, grandparents/-children, aunts/uncles, cousins, nieces/nephews), tagged Provenance=Inferred. */
 export function useListContactRelations<TData = Awaited<ReturnType<typeof listContactRelations>>, TError = ProblemDetails>(
  id: string,
     params: undefined |  ListContactRelationsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listContactRelations>>, TError, TData>> & Pick<
@@ -345,6 +346,7 @@ export function useListContactRelations<TData = Awaited<ReturnType<typeof listCo
       >, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary The contact's relationships, identical whichever side stores them: each entry's kind is the other contact's role relative to this one and its label this contact's own name for them. Set includeInferred=true to also return kin derived from the parent/child graph (siblings, grandparents/-children, aunts/uncles, cousins, nieces/nephews), tagged Provenance=Inferred. */
 export function useListContactRelations<TData = Awaited<ReturnType<typeof listContactRelations>>, TError = ProblemDetails>(
  id: string,
     params?: ListContactRelationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listContactRelations>>, TError, TData>> & Pick<
@@ -356,15 +358,13 @@ export function useListContactRelations<TData = Awaited<ReturnType<typeof listCo
       >, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary The contact's relationships, identical whichever side stores them: each entry's kind is the other contact's role relative to this one and its label this contact's own name for them. Set includeInferred=true to also return kin derived from the parent/child graph (siblings, grandparents/-children, aunts/uncles, cousins, nieces/nephews), tagged Provenance=Inferred. */
 export function useListContactRelations<TData = Awaited<ReturnType<typeof listContactRelations>>, TError = ProblemDetails>(
  id: string,
     params?: ListContactRelationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listContactRelations>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary The contact's relationships, identical whichever side stores them: each entry's kind is the other contact's role relative to this one and its label this contact's own name for them. Set includeInferred=true to also return kin derived from the parent/child graph (siblings, grandparents/-children, aunts/uncles, cousins, nieces/nephews), tagged Provenance=Inferred.
- */
-
+/** @summary The contact's relationships, identical whichever side stores them: each entry's kind is the other contact's role relative to this one and its label this contact's own name for them. Set includeInferred=true to also return kin derived from the parent/child graph (siblings, grandparents/-children, aunts/uncles, cousins, nieces/nephews), tagged Provenance=Inferred. */
 export function useListContactRelations<TData = Awaited<ReturnType<typeof listContactRelations>>, TError = ProblemDetails>(
  id: string,
     params?: ListContactRelationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listContactRelations>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
@@ -438,6 +438,7 @@ export type ListResidenciesQueryResult = NonNullable<Awaited<ReturnType<typeof l
 export type ListResidenciesQueryError = ProblemDetails
 
 
+/** @summary Every residency of a contact the caller can read — who lives, holidays and works where. */
 export function useListResidencies<TData = Awaited<ReturnType<typeof listResidencies>>, TError = ProblemDetails>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listResidencies>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -448,6 +449,7 @@ export function useListResidencies<TData = Awaited<ReturnType<typeof listResiden
       >, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Every residency of a contact the caller can read — who lives, holidays and works where. */
 export function useListResidencies<TData = Awaited<ReturnType<typeof listResidencies>>, TError = ProblemDetails>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listResidencies>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -458,14 +460,12 @@ export function useListResidencies<TData = Awaited<ReturnType<typeof listResiden
       >, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Every residency of a contact the caller can read — who lives, holidays and works where. */
 export function useListResidencies<TData = Awaited<ReturnType<typeof listResidencies>>, TError = ProblemDetails>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listResidencies>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Every residency of a contact the caller can read — who lives, holidays and works where.
- */
-
+/** @summary Every residency of a contact the caller can read — who lives, holidays and works where. */
 export function useListResidencies<TData = Awaited<ReturnType<typeof listResidencies>>, TError = ProblemDetails>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listResidencies>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
@@ -538,6 +538,7 @@ export type GetPlaceEntryQueryResult = NonNullable<Awaited<ReturnType<typeof get
 export type GetPlaceEntryQueryError = ProblemDetails
 
 
+/** @summary The door and gate codes at a place. Visible while the caller can read a contact currently living there; otherwise 404. */
 export function useGetPlaceEntry<TData = Awaited<ReturnType<typeof getPlaceEntry>>, TError = ProblemDetails>(
  placeId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlaceEntry>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -548,6 +549,7 @@ export function useGetPlaceEntry<TData = Awaited<ReturnType<typeof getPlaceEntry
       >, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary The door and gate codes at a place. Visible while the caller can read a contact currently living there; otherwise 404. */
 export function useGetPlaceEntry<TData = Awaited<ReturnType<typeof getPlaceEntry>>, TError = ProblemDetails>(
  placeId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlaceEntry>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -558,14 +560,12 @@ export function useGetPlaceEntry<TData = Awaited<ReturnType<typeof getPlaceEntry
       >, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary The door and gate codes at a place. Visible while the caller can read a contact currently living there; otherwise 404. */
 export function useGetPlaceEntry<TData = Awaited<ReturnType<typeof getPlaceEntry>>, TError = ProblemDetails>(
  placeId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlaceEntry>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary The door and gate codes at a place. Visible while the caller can read a contact currently living there; otherwise 404.
- */
-
+/** @summary The door and gate codes at a place. Visible while the caller can read a contact currently living there; otherwise 404. */
 export function useGetPlaceEntry<TData = Awaited<ReturnType<typeof getPlaceEntry>>, TError = ProblemDetails>(
  placeId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlaceEntry>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
@@ -660,9 +660,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type SetEntryCodeMutationError = ProblemDetails
     export type SetEntryCodeMutationVariables = {placeId: string;codeId: string;data: SetEntryCodeRequest}
 
-    /**
- * @summary Add or replace a code (the client mints codeId). Needs write on a contact currently living there.
- */
+    /** @summary Add or replace a code (the client mints codeId). Needs write on a contact currently living there. */
 export const useSetEntryCode = <TError = ProblemDetails,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setEntryCode>>, TError,SetEntryCodeMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient): UseMutationResult<
@@ -735,9 +733,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type RemoveEntryCodeMutationError = ProblemDetails
     export type RemoveEntryCodeMutationVariables = {placeId: string;codeId: string}
 
-    /**
- * @summary Remove a code. Needs write on a contact currently living there.
- */
+    /** @summary Remove a code. Needs write on a contact currently living there. */
 export const useRemoveEntryCode = <TError = ProblemDetails,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeEntryCode>>, TError,RemoveEntryCodeMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient): UseMutationResult<

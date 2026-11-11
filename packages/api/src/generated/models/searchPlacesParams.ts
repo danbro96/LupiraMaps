@@ -9,16 +9,16 @@ import type { PlaceKind } from './placeKind';
 import type { PlaceSource } from './placeSource';
 
 export type SearchPlacesParams = {
-q?: string;
-category?: PlaceCategory;
-kind?: PlaceKind;
-withinAreaId?: string;
-hasCoordinates?: boolean;
-source?: PlaceSource;
-verified?: boolean;
-nearLat?: number;
-nearLon?: number;
-radiusM?: number;
-bbox?: number[];
-limit?: number;
+  q?: string;
+  category?: PlaceCategory;
+  kind?: PlaceKind;
+  withinAreaId?: string;
+  hasCoordinates?: boolean;
+  source?: PlaceSource;
+  verified?: boolean;
+  nearLat?: number;
+  nearLon?: number;
+  radiusM?: number;
+  bbox?: number[];
+  limit?: number;
 };

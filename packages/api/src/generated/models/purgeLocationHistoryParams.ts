@@ -6,7 +6,7 @@
  */
 
 export type PurgeLocationHistoryParams = {
-from?: string;
-to?: string;
-deviceId?: string;
+  from?: string;
+  to?: string;
+  deviceId?: string;
 };

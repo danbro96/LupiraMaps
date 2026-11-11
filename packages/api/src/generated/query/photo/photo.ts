@@ -113,6 +113,7 @@ export type GetPhotoMapQueryResult = NonNullable<Awaited<ReturnType<typeof getPh
 export type GetPhotoMapQueryError = ProblemDetails
 
 
+/** @summary Geotagged Ready assets in a viewport as GeoJSON: a point per photo when at most 200 are in view or zoom >= 17, else a point per grid cell with its count. */
 export function useGetPhotoMap<TData = Awaited<ReturnType<typeof getPhotoMap>>, TError = ProblemDetails>(
  params: GetPhotoMapParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPhotoMap>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -123,6 +124,7 @@ export function useGetPhotoMap<TData = Awaited<ReturnType<typeof getPhotoMap>>, 
       >, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Geotagged Ready assets in a viewport as GeoJSON: a point per photo when at most 200 are in view or zoom >= 17, else a point per grid cell with its count. */
 export function useGetPhotoMap<TData = Awaited<ReturnType<typeof getPhotoMap>>, TError = ProblemDetails>(
  params: GetPhotoMapParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPhotoMap>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -133,14 +135,12 @@ export function useGetPhotoMap<TData = Awaited<ReturnType<typeof getPhotoMap>>, 
       >, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/** @summary Geotagged Ready assets in a viewport as GeoJSON: a point per photo when at most 200 are in view or zoom >= 17, else a point per grid cell with its count. */
 export function useGetPhotoMap<TData = Awaited<ReturnType<typeof getPhotoMap>>, TError = ProblemDetails>(
  params: GetPhotoMapParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPhotoMap>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Geotagged Ready assets in a viewport as GeoJSON: a point per photo when at most 200 are in view or zoom >= 17, else a point per grid cell with its count.
- */
-
+/** @summary Geotagged Ready assets in a viewport as GeoJSON: a point per photo when at most 200 are in view or zoom >= 17, else a point per grid cell with its count. */
 export function useGetPhotoMap<TData = Awaited<ReturnType<typeof getPhotoMap>>, TError = ProblemDetails>(
  params: GetPhotoMapParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPhotoMap>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
  , queryClient?: QueryClient
