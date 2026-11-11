@@ -68,6 +68,9 @@ export const VISIT = {
   strokeWidth: 2,
 } as const;
 
+/** The stay's measured spread, in metres: a faint halo under the dwell dot. */
+export const VISIT_EXTENT = { fillOpacity: 0.12, lineOpacity: 0.5, lineWidth: 1 } as const;
+
 export const CURRENT_FIX = { haloRadius: 14, haloOpacity: 0.2, dotRadius: 6, dotStrokeWidth: 2.5 } as const;
 
 export const HOTSPOT = { opacity: 0.22, strokeWidth: 2, labelMinZoom: 12 } as const;

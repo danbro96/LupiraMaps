@@ -10,6 +10,7 @@ import {
   photoFeatures,
   savedPlaceFeatures,
   trackFeatures,
+  visitExtentFeatures,
   visitFeatures,
   type PlacePoint,
 } from './mapFeatures';
@@ -152,19 +153,91 @@ describe('visitFeatures', () => {
   });
 });
 
+describe('visitExtentFeatures', () => {
+  it('draws a closed ring at the stay radius and skips stays without one', () => {
+    const fc = visitExtentFeatures([
+      { id: 'v1', lat: 59.3, lon: 18, arriveTs: '2026-01-01T10:00:00Z', departTs: '2026-01-01T11:00:00Z', radiusM: 50 },
+      { id: 'v2', lat: 59.3, lon: 18, arriveTs: '2026-01-01T12:00:00Z', departTs: '2026-01-01T13:00:00Z', radiusM: null },
+    ]);
+    expect(fc.features).toHaveLength(1);
+    expect(props(fc)).toEqual({ layer: 'visit-extent', visitId: 'v1' });
+    const ring = (fc.features[0].geometry as { coordinates: number[][][] }).coordinates[0];
+    expect(ring[0]).toEqual(ring[ring.length - 1]);
+    for (const [lon, lat] of ring) {
+      const dy = (lat - 59.3) * 111_320;
+      const dx = (lon - 18) * 111_320 * Math.cos((59.3 * Math.PI) / 180);
+      expect(Math.hypot(dx, dy)).toBeCloseTo(50, 0);
+    }
+  });
+});
+
 describe('trackFeatures', () => {
+  const home = { id: 'home', lat: 59.38, lon: 18.02, arriveTs: '2026-01-01T00:00:00Z', departTs: '2026-01-01T08:00:00Z' };
+  const work = { id: 'work', lat: 59.33, lon: 18.07, arriveTs: '2026-01-01T08:25:00Z', departTs: '2026-01-01T16:00:00Z' };
+  const commute = { startTs: home.departTs, endTs: work.arriveTs, activity: 'Vehicle', fromVisitId: 'home', toVisitId: 'work' };
+  const fix = (ts: string, lat: number, lon: number, activity: string | null = 'Walk') => ({ ts, lat, lon, activity });
+
   it('drops segments that cannot form a line and labels the activity', () => {
     const fc = trackFeatures(
       [
-        { lat: 59, lon: 18, ts: '2026-01-01T10:00:00Z', activity: 'Walking' },
-        { lat: 59.1, lon: 18.1, ts: '2026-01-01T10:01:00Z', activity: 'Walking' },
+        fix('2026-01-01T10:00:00Z', 59, 18, 'Walking'),
+        fix('2026-01-01T10:01:00Z', 59.1, 18.1, 'Walking'),
         // A gap past the threshold starts a new segment, and a lone point is not a line.
-        { lat: 59.5, lon: 18.5, ts: '2026-01-01T12:00:00Z', activity: null },
+        fix('2026-01-01T12:00:00Z', 59.5, 18.5, null),
       ],
+      [],
+      [],
       600,
     );
     expect(fc.features).toHaveLength(1);
     expect(props(fc).activity).toBe('Walking');
+  });
+
+  it('draws nothing inside a stay', () => {
+    const fc = trackFeatures(
+      [fix('2026-01-01T10:00:00Z', 59.331, 18.071), fix('2026-01-01T10:05:00Z', 59.329, 18.069), fix('2026-01-01T10:10:00Z', 59.331, 18.07)],
+      [work],
+      [],
+      600,
+    );
+    expect(fc.features).toHaveLength(0);
+  });
+
+  it('draws a trip as one line from stay to stay in the trip mode, across gaps', () => {
+    const fc = trackFeatures(
+      [
+        fix('2026-01-01T07:50:00Z', 59.38, 18.02, 'Still'),
+        fix('2026-01-01T08:05:00Z', 59.375, 18.025, 'Walk'),
+        fix('2026-01-01T08:20:00Z', 59.335, 18.068, 'Still'),
+        fix('2026-01-01T09:00:00Z', 59.33, 18.07, 'Still'),
+      ],
+      [home, work],
+      [commute],
+      600,
+    );
+    expect(fc.features).toHaveLength(1);
+    expect(props(fc).activity).toBe('Vehicle');
+    expect((fc.features[0].geometry as { coordinates: number[][] }).coordinates).toEqual([
+      [18.02, 59.38],
+      [18.025, 59.375],
+      [18.068, 59.335],
+      [18.07, 59.33],
+    ]);
+  });
+
+  it('segments fixes the rollup has not reached by their own activity, Still as Unknown', () => {
+    const fc = trackFeatures(
+      [
+        fix('2026-01-01T16:05:00Z', 59.33, 18.07, 'Walk'),
+        fix('2026-01-01T16:06:00Z', 59.331, 18.071, 'Walk'),
+        fix('2026-01-01T16:07:00Z', 59.332, 18.072, 'Still'),
+        fix('2026-01-01T16:08:00Z', 59.332, 18.072, 'Still'),
+      ],
+      [home, work],
+      [commute],
+      600,
+    );
+    expect(fc.features.map((_, i) => props(fc, i).activity)).toEqual(['Vehicle', 'Walk', 'Unknown']);
   });
 });
 

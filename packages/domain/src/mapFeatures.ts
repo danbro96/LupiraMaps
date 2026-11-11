@@ -1,4 +1,4 @@
-import type { Feature, FeatureCollection, LineString, Point } from 'geojson';
+import type { Feature, FeatureCollection, LineString, Point, Polygon } from 'geojson';
 import { type FuzzyDate, fmtFuzzyDate, fmtResidencyPeriod, residencyStatus } from '@danbro96/lupira-domain-contacts/fuzzyDate';
 import { splitTrack, type Bbox, type TrackPointLike } from '@danbro96/lupira-domain-places/geo';
 import { addressTypeLabel } from '@danbro96/lupira-domain-contacts/residents';
@@ -182,16 +182,98 @@ export function visitFeatures(visits: readonly VisitPin[]): FeatureCollection {
   })));
 }
 
+const EXTENT_VERTICES = 32;
+const METRES_PER_DEGREE_LAT = 111_320;
+
+/** A stay's measured spread as a ring in metres, so it scales with the map where the dwell dot does not. */
+export function visitExtentFeatures(visits: readonly VisitPin[]): FeatureCollection {
+  return collect(visits.flatMap((v) => (v.radiusM != null && v.radiusM > 0 ? [extentRing(v, v.radiusM)] : [])));
+}
+
+function extentRing(v: VisitPin, radiusM: number): Feature<Polygon> {
+  const dLat = radiusM / METRES_PER_DEGREE_LAT;
+  const dLon = dLat / Math.cos((v.lat * Math.PI) / 180);
+  const ring = Array.from({ length: EXTENT_VERTICES }, (_, k) => {
+    const a = (2 * Math.PI * k) / EXTENT_VERTICES;
+    return [v.lon + dLon * Math.cos(a), v.lat + dLat * Math.sin(a)];
+  });
+  ring.push(ring[0]);
+  return { type: 'Feature', geometry: { type: 'Polygon', coordinates: [ring] }, properties: { layer: 'visit-extent', visitId: v.id } };
+}
+
+export interface TripSpan {
+  startTs: string;
+  endTs: string;
+  activity?: string | null;
+  fromVisitId?: string | null;
+  toVisitId?: string | null;
+}
+
 /** A recording hole longer than this breaks the drawn track (tracker off, retention edge). */
 export const TRACK_MAX_GAP_S = 10 * 60;
 
-export function trackFeatures(points: readonly TrackPointLike[], maxGapS: number): FeatureCollection {
-  const segments = splitTrack(points, maxGapS).filter((segment) => segment.length >= 2);
-  return collect(segments.map((segment): Feature<LineString> => ({
+/** The recorder's Still has no hue; on a line it means "barely moving", so it draws like Unknown. */
+function trackLine(coordinates: number[][], activity: string | null | undefined): Feature<LineString> {
+  return {
     type: 'Feature',
-    geometry: { type: 'LineString', coordinates: segment.map((p) => [p.lon, p.lat]) },
-    properties: { layer: 'track', activity: segment[0].activity ?? 'Unknown' },
-  })));
+    geometry: { type: 'LineString', coordinates },
+    properties: { layer: 'track', activity: activity == null || activity === 'Still' ? 'Unknown' : activity },
+  };
+}
+
+/** Index of the first item whose key is above `x`; `items` sorted ascending by key. */
+function upperBound<T>(items: readonly T[], x: number, key: (item: T) => number): number {
+  let lo = 0;
+  let hi = items.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (key(items[mid]) <= x) lo = mid + 1;
+    else hi = mid;
+  }
+  return lo;
+}
+
+/** Movement lines as the rollup sees them: nothing inside a stay, one line per trip from stay to stay in the
+ *  trip's mode, and per-fix segments only for fixes no visit or trip covers yet (the rollup runs hourly). */
+export function trackFeatures(
+  points: readonly TrackPointLike[],
+  visits: readonly VisitPin[],
+  trips: readonly TripSpan[],
+  maxGapS: number,
+): FeatureCollection {
+  const fixes = points.map((p) => ({ ...p, t: Date.parse(p.ts) })).sort((a, b) => a.t - b.t);
+  const visitById = new Map(visits.map((v) => [v.id, v]));
+  const features: Feature<LineString>[] = [];
+
+  for (const trip of trips) {
+    const end = Date.parse(trip.endTs);
+    const from = trip.fromVisitId ? visitById.get(trip.fromVisitId) : undefined;
+    const to = trip.toVisitId ? visitById.get(trip.toVisitId) : undefined;
+    const coordinates = from ? [[from.lon, from.lat]] : [];
+    for (let i = upperBound(fixes, Date.parse(trip.startTs), (f) => f.t); i < fixes.length && fixes[i].t < end; i++) {
+      coordinates.push([fixes[i].lon, fixes[i].lat]);
+    }
+    if (to) coordinates.push([to.lon, to.lat]);
+    if (coordinates.length >= 2) features.push(trackLine(coordinates, trip.activity));
+  }
+
+  const windows = [
+    ...visits.map((v) => ({ start: Date.parse(v.arriveTs), end: Date.parse(v.departTs) })),
+    ...trips.map((t) => ({ start: Date.parse(t.startTs), end: Date.parse(t.endTs) })),
+  ].sort((a, b) => a.start - b.start);
+  // Latest end among windows[0..i], so overlapping windows still answer "covered" with one search.
+  const reach: number[] = [];
+  windows.forEach((w, i) => reach.push(i === 0 ? w.end : Math.max(w.end, reach[i - 1])));
+  const covered = (t: number) => {
+    const i = upperBound(windows, t, (w) => w.start) - 1;
+    return i >= 0 && reach[i] >= t;
+  };
+
+  for (const segment of splitTrack(fixes.filter((f) => !covered(f.t)), maxGapS)) {
+    // After an activity change splitTrack repeats the previous fix first, so the last fix names the segment.
+    if (segment.length >= 2) features.push(trackLine(segment.map((p) => [p.lon, p.lat]), segment[segment.length - 1].activity));
+  }
+  return collect(features);
 }
 
 export interface CurrentFix {

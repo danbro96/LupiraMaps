@@ -8,13 +8,13 @@ import {
   photoFeatures,
   savedPlaceFeatures,
   trackFeatures,
+  visitExtentFeatures,
   visitFeatures,
   TRACK_MAX_GAP_S,
 } from '@lupira/maps-domain/mapFeatures';
 import type { MapViewport } from '@danbro96/lupira-domain-places/geo';
 import { useListSavedPlaces } from '@lupira/maps-api/query/geo';
 import { useGetPhotoMap } from '@lupira/maps-api/query/photo';
-import type { LocationTripDto } from '@lupira/maps-api/models';
 import { useGetHotspots } from '@lupira/maps-api/query/cal';
 import { trackBucketSeconds } from '@lupira/maps-domain/mapWindow';
 import { useContainers } from './useContainers';
@@ -82,27 +82,30 @@ export function useContactFeatures(enabled: boolean): {
 
 export interface MovementFeaturesResult {
   visits: FeatureCollection;
+  extents: FeatureCollection;
   track: FeatureCollection;
   current: FeatureCollection;
-  trips: LocationTripDto[];
   isLoading: boolean;
 }
 
-/** Movement layer: visit dwell-circles, activity-segmented track lines, and the live position dot. */
+/** Movement layer: visit dwell-circles with extent rings, trip lines in the trip's mode, and the live position dot. */
 export function useMovementFeatures(from: string, to: string, enabled: boolean): MovementFeaturesResult {
   const visitsQ = useVisits(from, to, enabled);
   const tripsQ = useTrips(from, to, enabled);
   const trackQ = useThinnedTrack(from, to, enabled, trackBucketSeconds(new Date(from), new Date(to)));
   const currentQ = useCurrentFixes(enabled);
+  const visits = visitsQ.data ?? [];
 
   return {
-    visits: visitFeatures(visitsQ.data ?? []),
+    visits: visitFeatures(visits),
+    extents: visitExtentFeatures(visits),
     track: trackFeatures(
       (trackQ.data ?? []).map((p) => ({ lat: p.lat, lon: p.lon, ts: p.ts, activity: p.activity ?? null })),
+      visits,
+      (tripsQ.data ?? []).map((t) => ({ ...t, activity: t.dominantActivity ?? null })),
       TRACK_MAX_GAP_S,
     ),
     current: currentFixFeatures(currentQ.data ?? []),
-    trips: tripsQ.data ?? [],
     isLoading: enabled && (visitsQ.isLoading || trackQ.isLoading || tripsQ.isLoading),
   };
 }

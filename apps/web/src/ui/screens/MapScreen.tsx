@@ -323,7 +323,7 @@ export default function MapScreen() {
       <MapCanvas>
         {activeLayers.includes('hotspots') && <HotspotsLayer theme={theme} features={hotspots.features} />}
         {activeLayers.includes('movement') && (
-          <MovementLayer theme={theme} visits={movement.visits} track={movement.track} current={movement.current} />
+          <MovementLayer theme={theme} visits={movement.visits} extents={movement.extents} track={movement.track} current={movement.current} />
         )}
         {activeLayers.includes('events') && <EventsLayer theme={theme} features={events.features} />}
         {activeLayers.includes('contacts') && showHistory && <FormerContactsLayer theme={theme} features={contacts.former} />}

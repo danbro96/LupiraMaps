@@ -15,11 +15,12 @@ import {
   photoFeatures,
   savedPlaceFeatures,
   trackFeatures,
+  visitExtentFeatures,
   visitFeatures,
   TRACK_MAX_GAP_S,
 } from '@lupira/maps-domain/mapFeatures';
 import { useCalendars } from './useContainers';
-import { useCurrentFixes, useThinnedTrack, useVisits } from './useMovement';
+import { useCurrentFixes, useThinnedTrack, useTrips, useVisits } from './useMovement';
 import { useMyContactId } from './useMe';
 import { useOccurrencesBetween } from './useOccurrences';
 import { usePlaceCoords } from './usePlaceLookup';
@@ -77,21 +78,26 @@ export function usePhotoFeatures(viewport: MapViewport | null, fromIso: string |
   return enabled ? photoFeatures(q.data?.features ?? []) : EMPTY_FEATURES;
 }
 
-export type MovementFeatures = { visits: FeatureCollection; track: FeatureCollection; current: FeatureCollection };
+export type MovementFeatures = { visits: FeatureCollection; extents: FeatureCollection; track: FeatureCollection; current: FeatureCollection };
 
-const EMPTY_MOVEMENT: MovementFeatures = { visits: EMPTY_FEATURES, track: EMPTY_FEATURES, current: EMPTY_FEATURES };
-/** Where you've been: dwell circles, an activity-coloured track, and the last fix each device reported.
- *  `live` polls the current fixes — only while the map is on screen. */
+const EMPTY_MOVEMENT: MovementFeatures = { visits: EMPTY_FEATURES, extents: EMPTY_FEATURES, track: EMPTY_FEATURES, current: EMPTY_FEATURES };
+/** Where you've been: dwell circles with extent rings, trip lines in the trip's mode, and the last fix each device
+ *  reported. `live` polls the current fixes — only while the map is on screen. */
 export function useMovementFeatures(fromIso: string, toIso: string, enabled: boolean, live: boolean): MovementFeatures {
   const visitsQ = useVisits(fromIso, toIso, enabled);
+  const tripsQ = useTrips(fromIso, toIso, enabled);
   const trackQ = useThinnedTrack(fromIso, toIso, enabled);
   const currentQ = useCurrentFixes(enabled, live);
 
   if (!enabled) return EMPTY_MOVEMENT;
+  const visits = visitsQ.data ?? [];
   return {
-    visits: visitFeatures(visitsQ.data ?? []),
+    visits: visitFeatures(visits),
+    extents: visitExtentFeatures(visits),
     track: trackFeatures(
       (trackQ.data ?? []).map((p) => ({ lat: p.lat, lon: p.lon, ts: p.ts, activity: p.activity ?? null })),
+      visits,
+      (tripsQ.data ?? []).map((t) => ({ ...t, activity: t.dominantActivity ?? null })),
       TRACK_MAX_GAP_S,
     ),
     current: currentFixFeatures(currentQ.data ?? []),

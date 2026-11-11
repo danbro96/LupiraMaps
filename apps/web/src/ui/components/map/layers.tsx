@@ -1,9 +1,8 @@
 import type { FeatureCollection } from 'geojson';
-import type { LocationTripDto } from '@lupira/maps-api/models';
 import { useMap } from './MapCanvas';
 import { ACTIVITY_COLORS, activityColorExpression, MAP_COLORS, type MapTheme } from '@danbro96/lupira-tokens-map/map';
 import {
-  CLUSTER, CLUSTER_COUNT_LAYOUT, CURRENT_FIX, HOTSPOT, PIN, PIN_LABEL_HALO_WIDTH, PIN_LABEL_LAYOUT, TRACK, VISIT, clusterRadius,
+  CLUSTER, CLUSTER_COUNT_LAYOUT, CURRENT_FIX, HOTSPOT, PIN, PIN_LABEL_HALO_WIDTH, PIN_LABEL_LAYOUT, TRACK, VISIT, VISIT_EXTENT, clusterRadius,
   contactPinFill, contactPinStroke, hotspotRadius,
 } from '@lupira/maps-tokens/mapPaint';
 import { placeGlyphImagePrefix, usePlaceGlyphImages } from './placeGlyphImages';
@@ -142,14 +141,27 @@ export function FormerContactsLayer({ theme, features }: CommonLayerProps & { fe
   return null;
 }
 
-/** Visits (dwell-sized circles), activity-colored track lines with a surface casing, live position. */
-export function MovementLayer({ theme, visits, track, current }: CommonLayerProps & {
+/** Visits (metre extent rings under dwell-sized circles), trip-mode-colored track lines with a surface casing, live position. */
+export function MovementLayer({ theme, visits, extents, track, current }: CommonLayerProps & {
   visits: FeatureCollection;
+  extents: FeatureCollection;
   track: FeatureCollection;
   current: FeatureCollection;
 }) {
   const map = useMap();
   const colors = MAP_COLORS[theme];
+
+  const extentLayers: LayerSpecSansSource[] = [
+    {
+      id: 'visit-extents-fill', type: 'fill',
+      paint: { 'fill-color': colors.visitFill, 'fill-opacity': VISIT_EXTENT.fillOpacity },
+    },
+    {
+      id: 'visit-extents-line', type: 'line',
+      paint: { 'line-color': colors.visitFill, 'line-opacity': VISIT_EXTENT.lineOpacity, 'line-width': VISIT_EXTENT.lineWidth },
+    },
+  ];
+  useGeoJsonLayer(map, 'visit-extents', extents, extentLayers);
 
   const trackLayers: LayerSpecSansSource[] = [
     {
@@ -309,6 +321,3 @@ export function PhotosLayer({ theme, features }: CommonLayerProps & { features: 
   });
   return null;
 }
-
-/** Trips exist in state (list + endpoint visit ids) but draw as the track itself in v1. */
-export type { LocationTripDto };

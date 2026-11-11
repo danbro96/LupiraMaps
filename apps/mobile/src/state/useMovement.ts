@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { onlineQuery } from '@danbro96/lupira-expo-query/onlineQuery';
-import { getCurrentLocation, getThinnedTrack, listVisits } from '@lupira/maps-api/fetch/location';
+import { getCurrentLocation, getThinnedTrack, listTrips, listVisits } from '@lupira/maps-api/fetch/location';
 import { LIVE_FIX_POLL_MS, LIVE_FIX_STALE_MS, movementStaleMs } from '@danbro96/lupira-domain-places/geo';
 import { trackBucketSeconds } from '@lupira/maps-domain/mapWindow';
 
@@ -9,6 +9,14 @@ import { trackBucketSeconds } from '@lupira/maps-domain/mapWindow';
 export function useVisits(fromIso: string, toIso: string, enabled: boolean) {
   return useQuery({
     ...onlineQuery(['movement', 'visits', fromIso, toIso], () => listVisits({ from: fromIso, to: toIso })),
+    enabled,
+    staleTime: movementStaleMs(toIso),
+  });
+}
+
+export function useTrips(fromIso: string, toIso: string, enabled: boolean) {
+  return useQuery({
+    ...onlineQuery(['movement', 'trips', fromIso, toIso], () => listTrips({ from: fromIso, to: toIso })),
     enabled,
     staleTime: movementStaleMs(toIso),
   });

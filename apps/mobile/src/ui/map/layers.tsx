@@ -14,7 +14,7 @@ import { Icon } from 'react-native-paper';
 import type { LivePosition } from '../../sync/livePosition';
 import { ACTIVITY_COLORS, MAP_COLORS, activityColorExpression, type MapTheme } from '@danbro96/lupira-tokens-map/map';
 import {
-  CLUSTER, CLUSTER_COUNT_LAYOUT, CURRENT_FIX, HOTSPOT, PIN, PIN_LABEL_HALO_WIDTH, PIN_LABEL_LAYOUT, TRACK, VISIT, clusterRadius,
+  CLUSTER, CLUSTER_COUNT_LAYOUT, CURRENT_FIX, HOTSPOT, PIN, PIN_LABEL_HALO_WIDTH, PIN_LABEL_LAYOUT, TRACK, VISIT, VISIT_EXTENT, clusterRadius,
   contactPinFill, contactPinStroke, hotspotRadius,
 } from '@lupira/maps-tokens/mapPaint';
 import { PIN_CLUSTERS } from '@danbro96/lupira-domain-maps/mapZoom';
@@ -221,10 +221,11 @@ export function HotspotsLayer({ theme, features, onPress }: {
   );
 }
 
-/** Where you've been: the track underneath, dwell circles on top, then each device's last known fix. */
-export function MovementLayer({ theme, visits, track, current, onVisitPress }: {
+/** Where you've been: stay extent rings and the track underneath, dwell circles on top, then each device's last known fix. */
+export function MovementLayer({ theme, visits, extents, track, current, onVisitPress }: {
   theme: MapTheme;
   visits: FeatureCollection;
+  extents: FeatureCollection;
   track: FeatureCollection;
   current: FeatureCollection;
   onVisitPress?: PressHandler;
@@ -232,6 +233,19 @@ export function MovementLayer({ theme, visits, track, current, onVisitPress }: {
   const colors = MAP_COLORS[theme];
   return (
     <>
+      <GeoJSONSource id="visit-extents" data={extents}>
+        <Layer
+          id="visit-extents-fill"
+          type="fill"
+          paint={{ 'fill-color': colors.visitFill, 'fill-opacity': VISIT_EXTENT.fillOpacity }}
+        />
+        <Layer
+          id="visit-extents-line"
+          type="line"
+          paint={{ 'line-color': colors.visitFill, 'line-opacity': VISIT_EXTENT.lineOpacity, 'line-width': VISIT_EXTENT.lineWidth }}
+        />
+      </GeoJSONSource>
+
       <GeoJSONSource id="track" data={track} lineMetrics>
         <Layer
           id="track-casing"

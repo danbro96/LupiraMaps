@@ -318,7 +318,7 @@ export function MapScreen() {
             {/* Always mounted: a layer mounted later is appended above the pins and would cover them. */}
             <HotspotsLayer theme={theme} features={hotspots} />
             {enabled.movement && (
-              <MovementLayer theme={theme} visits={movement.visits} track={movement.track} current={movement.current} />
+              <MovementLayer theme={theme} visits={movement.visits} extents={movement.extents} track={movement.track} current={movement.current} />
             )}
             {enabled.saved && <SavedPlacesLayer theme={theme} features={saved} />}
             {enabled.contacts && <ContactsLayer theme={theme} features={contacts} sourceRef={contactSourceRef} />}
