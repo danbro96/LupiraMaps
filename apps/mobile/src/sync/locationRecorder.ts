@@ -113,8 +113,7 @@ export async function isRecording(): Promise<boolean> {
  *  for a backgrounded app. Assumes permissions are already granted (see the tracking store). */
 export async function startRecording(): Promise<void> {
   const wasRecording = await isRecording();
-  // Re-issued even when live: after a headless restart expo-location restores the options from JSON and
-  // drops the Integer timeInterval, so the OS request silently runs at its 2 s default.
+  // Re-issued even when live, so the OS request always matches `RECORDING`.
   await startUpdates();
   useTrackingStatus.getState().set({ recording: true });
   logDebug('location', wasRecording ? 'recording re-applied' : 'recording started');
